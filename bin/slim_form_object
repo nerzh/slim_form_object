@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/slim_form_object'
+
+module GameCodebreaker
+
+end
+
