@@ -1,11 +1,82 @@
 require 'spec_helper'
+require 'helpers/models'
 
-describe SlimFormObject do
+class TestModule
+end
+
+describe TestModule do
+
+  include SlimFormObject
+
   it 'has a version number' do
     expect(SlimFormObject::VERSION).not_to be nil
   end
 
-  it 'does something useful' do
-    expect(false).to eq(true)
+  context 'get_association' do
+    it 'model1 has_one model2' do
+      association = send :get_association, TestOneModel, TestTwoModel
+      expect(association).to eq(:has_one)
+    end
+
+    it 'model2 belongs_to model1' do
+      association = send :get_association, TestTwoModel, TestOneModel
+      expect(association).to eq(:belongs_to)
+    end
+
+    it 'model1 has_many model3' do
+      association = send :get_association, TestOneModel, TestThreeModel
+      expect(association).to eq(:has_many)
+    end
+
+    it 'model3 belongs_to model1' do
+      association = send :get_association, TestThreeModel, TestOneModel
+      expect(association).to eq(:belongs_to)
+    end
+
+    it 'model1 has_many :test_four_models, through: :test_one_four_models' do
+      association = send :get_association, TestOneModel, TestFourModel
+      expect(association).to eq(:has_many)
+    end
+
+    it 'model2 has_and_belongs_to_many model3' do
+      association = send :get_association, TestTwoModel, TestThreeModel
+      expect(association).to eq(:has_and_belongs_to_many)
+    end
+
+    it 'model3 has_and_belongs_to_many model2' do
+      association = send :get_association, TestThreeModel, TestTwoModel
+      expect(association).to eq(:has_and_belongs_to_many)
+    end
+
+    it 'model3 has_and_belongs_to_many model2' do
+      association = send :get_association, TestThreeModel, TestTwoModel
+      expect(association).to eq(:has_and_belongs_to_many)
+    end
+
+    it 'model4 has_many :test_one_models, through: :test_one_four_models' do
+      association = send :get_association, TestFourModel, TestOneModel
+      expect(association).to eq(:has_many)
+    end
+
+    it 'model1-4 belongs_to model1' do
+      association = send :get_association, TestOneFourModel, TestOneModel
+      expect(association).to eq(:belongs_to)
+    end
+
+    it 'model1-4 belongs_to model4' do
+      association = send :get_association, TestOneFourModel, TestFourModel
+      expect(association).to eq(:belongs_to)
+    end
+
+    it 'model1 don\'t have model1-4' do
+      association = send :get_association, TestOneModel, TestOneFourModel
+      expect(association).to eq(nil)
+    end
+
+    it 'model4 don\'t have model1-4' do
+      association = send :get_association, TestFourModel, TestOneFourModel
+      expect(association).to eq(nil)
+    end
   end
+  
 end
