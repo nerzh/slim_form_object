@@ -6,6 +6,7 @@ end
 
 describe TestModule do
 
+  # include ActiveModel::Model
   include SlimFormObject
 
   it 'has a version number' do
@@ -94,6 +95,38 @@ describe TestModule do
     it 'must be called add_attributes' do
       expect(self.class).to receive(:add_attributes).and_return(true)
       self.class.init_models(TestOneModel, TestTwoModel)
+    end
+  end
+
+  context 'snake' do
+    it { expect( self.class.snake(TestOneModel.to_s) ).to eq('test_one_model') }
+    it { expect( self.class.snake('123_Asd') ).to eq('123__asd') }
+    it { expect( self.class.snake('_zA') ).to eq('_z_a') }
+    it { expect( self.class.snake('_zA12') ).to eq('_z_a12') }
+    it { expect( self.class.snake('_zA-12_') ).to eq('_z_a-12_') }
+  end
+
+  context 'add_attributes' do
+    before :each do
+      # self.test_one_model = TestOneModel.new
+      # self.test_two_model = TestTwoModel.new
+    end
+
+    it 'attributes do not exist' do
+      expect(self.respond_to? :params).to eq(false)
+      expect(self.respond_to? :test_one_model_title).to eq(false)
+      expect(self.respond_to? :test_one_model_descr).to eq(false)
+    end
+
+    it 'attributes exist' do
+      self.class.instance_variable_set(:@models, [TestOneModel, TestTwoModel])
+      self.class.add_attributes
+      expect(self.respond_to? :params).to eq(true)
+      expect(self.respond_to? :test_one_model_title).to eq(true)
+      expect(self.respond_to? :test_one_model_descr).to eq(true)
+      expect(self.respond_to? :test_two_model_title).to eq(true)
+      expect(self.respond_to? :test_two_model_descr).to eq(true)
+      expect(self.respond_to? :test_two_model_test_one_model_id).to eq(true)
     end
   end
 
