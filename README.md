@@ -65,9 +65,9 @@ Or install it yourself as:
       include SlimFormObject
       validate :validation_models
       
-      #name params for Form in HTML e.g. 'User'
+      #name params for Form in HTML e.g. 'Review'
       def self.model_name
-        ActiveModel::Name.new(self, nil, "User")
+        ActiveModel::Name.new(self, nil, "Review")
       end
     
       #models which will be updated
@@ -95,7 +95,8 @@ Or install it yourself as:
       end
     
       def create
-        reviewForm = ReviewForm.new(params: params_review)
+        user = current_user
+        reviewForm = ReviewForm.new(params: params_review, current_user: user)
         reviewForm.submit
         reviewForm.save ? (render json: {status: 200}) : (render json: reviewForm.errors, status: :unprocessable_entity)
       end
