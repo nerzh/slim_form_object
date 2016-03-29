@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{This is form object}
   spec.description   = %q{It's works}
-  spec.homepage      = "http://inclouds.com.ua"
+  spec.homepage      = "https://github.com/woodcrust/slim_form_object"
   spec.license       = "MIT"
 
   spec.files         = Dir['lib/**/*']
