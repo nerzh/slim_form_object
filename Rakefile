@@ -11,8 +11,10 @@ task :default => :spec
 namespace :db do
   desc "Migrate the database"
   task :migrate do
+
+    ActiveRecord::Base.logger = Logger.new(STDERR)
     ActiveRecord::Base.establish_connection dbconfig['test']
-    ActiveRecord::Migrator.migrate('/spec/db/migrate', ENV["VERSION"] ? ENV["VERSION"].to_i : nil )
+    ActiveRecord::Migrator.migrate('spec/db/migrate', ENV["VERSION"] ? ENV["VERSION"].to_i : nil )
   end
 end
 
