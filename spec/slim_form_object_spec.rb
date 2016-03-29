@@ -85,8 +85,16 @@ describe TestModule do
 
   end
 
-  it 'a' do
-    # expect(TestOneModel).to eq(true)
+  context 'init_models' do
+    it 'init variable @models' do
+      self.class.init_models(TestOneModel, TestTwoModel)
+      expect( self.class.instance_variable_get(:@models) ).to eq([TestOneModel, TestTwoModel])
+    end
+
+    it 'must be called add_attributes' do
+      expect(self.class).to receive(:add_attributes).and_return(true)
+      self.class.init_models(TestOneModel, TestTwoModel)
+    end
   end
 
 end

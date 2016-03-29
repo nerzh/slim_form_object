@@ -75,7 +75,7 @@ Or install it yourself as:
     
       # create objects for models
       def initialize(params: {}, current_user: nil)
-        self.user             = current_user if current_user
+        self.user             = current_user
         self.review_book      = ReviewBook.new
         self.rating           = Rating.new
         
@@ -121,11 +121,6 @@ example name of attributes: name_model_name_atribute (e.g. review_book and theme
         = f.submit 'Create review',                                 class: 'form-control btn btn-success'
 
 ```
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 

@@ -1,7 +1,7 @@
 
 class CreateModelOne < ActiveRecord::Migration
   def self.up
-    create_table :test_one_model do |t|
+    create_table :test_one_models do |t|
       t.string :title
       t.string :descr
     end
