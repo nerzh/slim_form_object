@@ -114,11 +114,11 @@ Or install it yourself as:
 # HTML FORM (Haml)
 example name of attributes: name_model_name_atribute (e.g. review_book and theme => review_book_theme)
 
-      = form_for @reviewForm, url: reviews_path, method: 'POST', html: {class: 'create_review form-control wrap-start'} do |f|
-        = f.number_field :rating_ratings, placeholder: "Rating", class: 'form-control input-checkout'
-        = f.text_field   :review_book_theme,  placeholder: "Theme",  class: 'form-control input-checkout'
-        = f.text_field   :review_book_text,   placeholder: "Text",   class: 'form-control input-checkout'
-        = f.submit 'Create review',                             class: 'form-control btn btn-success input-checkout'
+      = form_for @reviewForm, url: reviews_path, method: 'POST', html: {class: 'form-control'} do |f|
+        = f.number_field :rating_ratings,    placeholder: "Rating", class: 'form-control input-checkout'
+        = f.text_field   :review_book_theme, placeholder: "Theme",  class: 'form-control input-checkout'
+        = f.text_field   :review_book_text,  placeholder: "Text",   class: 'form-control input-checkout'
+        = f.submit 'Create review',                                 class: 'form-control btn btn-success'
 
 ```
 ## Development
