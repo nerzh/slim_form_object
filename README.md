@@ -65,13 +65,13 @@ Or install it yourself as:
       include SlimFormObject
       validate :validation_models
       
-      #name params for Form in HTML e.g. 'Review'
+      #name params for params.require(:NAME).permit(...) e.g. 'ReviewBook'
       def self.model_name
-        ActiveModel::Name.new(self, nil, "Review")
+        ActiveModel::Name.new(self, nil, "ReviewBook")
       end
     
       #models which will be updated
-      init_models User, Rating, Review
+      init_models User, Rating, ReviewBook
     
       # create objects for models
       def initialize(params: {}, current_user: nil)
@@ -104,7 +104,7 @@ Or install it yourself as:
       private
     
       def params_review
-        params.require(:review).permit(:rating_ratings, :review_book_theme, :review_book_text)
+        params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text)
       end
     end
     
