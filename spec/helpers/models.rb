@@ -1,6 +1,7 @@
 class TestOneModel < ActiveRecord::Base
   has_one  :test_two_model
   has_many :test_three_models
+  has_many :test_one_four_models
   has_many :test_four_models, through: :test_one_four_models
 end
 
@@ -15,6 +16,7 @@ class TestThreeModel < ActiveRecord::Base
 end
 
 class TestFourModel < ActiveRecord::Base
+  has_many :test_one_four_models
   has_many :test_one_models, through: :test_one_four_models
 end
 

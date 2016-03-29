@@ -1,0 +1,9 @@
+test:
+  adapter: postgresql
+  encoding: unicode
+  host: localhost
+  port: 5432
+  database: test_sof
+  pool: 5
+  username: rails_app
+  password: password1

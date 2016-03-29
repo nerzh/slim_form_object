@@ -3,7 +3,7 @@ require 'slim_form_object'
 require 'bundler/setup'
 require 'active_record'
 require 'rspec/collection_matchers'
-
+require 'helpers/connect_to_base'
 
 RSpec.configure do |config|
 

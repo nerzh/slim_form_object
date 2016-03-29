@@ -68,15 +68,25 @@ describe TestModule do
       expect(association).to eq(:belongs_to)
     end
 
-    it 'model1 don\'t have model1-4' do
+    it 'model1 has_many model1-4' do
       association = send :get_association, TestOneModel, TestOneFourModel
+      expect(association).to eq(:has_many)
+    end
+
+    it 'model4 has_many model1-4' do
+      association = send :get_association, TestFourModel, TestOneFourModel
+      expect(association).to eq(:has_many)
+    end
+
+    it 'model2 don\'t have model4' do
+      association = send :get_association, TestTwoModel, TestFourModel
       expect(association).to eq(nil)
     end
 
-    it 'model4 don\'t have model1-4' do
-      association = send :get_association, TestFourModel, TestOneFourModel
-      expect(association).to eq(nil)
-    end
   end
-  
+
+  it 'a' do
+    expect(TestOneModel).to eq(true)
+  end
+
 end
