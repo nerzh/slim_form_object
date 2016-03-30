@@ -1,12 +1,12 @@
 require 'spec_helper'
 require 'helpers/models'
+require 'byebug'
 
 class TestModule
 end
 
 describe TestModule do
-
-  # include ActiveModel::Model
+  
   include SlimFormObject
 
   it 'has a version number' do
@@ -107,11 +107,6 @@ describe TestModule do
   end
 
   context 'add_attributes' do
-    before :each do
-      # self.test_one_model = TestOneModel.new
-      # self.test_two_model = TestTwoModel.new
-    end
-
     it 'attributes do not exist' do
       expect(self.respond_to? :params).to eq(false)
       expect(self.respond_to? :test_one_model_title).to eq(false)
@@ -128,6 +123,12 @@ describe TestModule do
       expect(self.respond_to? :test_two_model_descr).to eq(true)
       expect(self.respond_to? :test_two_model_test_one_model_id).to eq(true)
     end
+  end
+
+  context 'get_models' do
+    self.class_eval {@models = [TestOneModel, TestTwoModel]}
+    models = self.new.send :get_models
+    it { expect( models ).to eq( [TestOneModel, TestTwoModel] ) }
   end
 
 end

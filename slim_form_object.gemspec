@@ -28,4 +28,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'database_cleaner', '~> 1.5'
   spec.add_development_dependency "activerecord", "~> 4.2"
   spec.add_development_dependency 'pg', '~> 0.18.4'
+  spec.add_development_dependency 'byebug'
 end
