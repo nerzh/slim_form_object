@@ -59,7 +59,6 @@ Or install it yourself as:
 # class FormObject
 
     class ReviewForm
-      include ActiveModel::Model
       include SlimFormObject
       validate :validation_models
       
