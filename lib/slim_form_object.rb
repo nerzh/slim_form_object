@@ -8,21 +8,23 @@ module SlimFormObject
 
   module ClassMethods
     def init_models(*args)
-      @models = args
-      add_attributes
+      self.instance_eval do
+        define_method(:array_of_models) { args }
+      end
+      add_attributes(args)
     end
 
     def snake(string)
       string.gsub(/((\w)([A-Z]))/,'\2_\3').downcase
     end
 
-    def add_attributes
+    def add_attributes(models)
       #attr_accessor for models and env params
       attr_accessor :params
-      @models.each{ |model| attr_accessor snake(model.to_s).to_sym }
+      models.each{ |model| attr_accessor snake(model.to_s).to_sym }
 
       #delegate attributes of models
-      @models.each do |model|
+      models.each do |model|
         model.column_names.each do |attr|
           delegate attr.to_sym, "#{attr}=".to_sym,
                    to: snake(model.to_s).to_sym,
@@ -40,7 +42,7 @@ module SlimFormObject
     if valid?
       models = get_model_for_save
       while model1 = models.delete( models[0] )
-        get_models.each{ |model2| save_models(model1, model2) }
+        array_of_models.each{ |model2| save_models(model1, model2) }
       end
 
       return true
@@ -49,10 +51,6 @@ module SlimFormObject
   end
 
   private
-
-  def get_models
-    self.class.instance_variable_get(:@models)
-  end
 
   def save_models(model1, model2)
     self_model1 = method( self.class.snake(model1.to_s) ).call
@@ -87,22 +85,31 @@ module SlimFormObject
   end
 
   def update_attributes
-    get_models.each do |model|
-      model_attributes = []
-      model.column_names.each do |name|
-        model_attributes << "#{self.class.snake(model.to_s)}_#{name}"
-      end
-      update_attributes = {}
-      hash_attributes   = params.slice(*model_attributes)
-      hash_attributes.each{ |attr, val| update_attributes[attr.gsub(/#{self.class.snake(model.to_s)}_(.*)/, '\1')] = val }
-      method( self.class.snake(model.to_s) ).call.assign_attributes(update_attributes)
+    array_of_models.each do |model|
+      model_attributes = make_attributes_of_model(model)
+      method( self.class.snake(model.to_s) ).call.assign_attributes( get_attributes_for_update(model_attributes, model) )
     end
+  end
+
+  def make_attributes_of_model(model)
+    model_attributes = []
+    model.column_names.each do |name|
+      model_attributes << "#{self.class.snake(model.to_s)}_#{name}"
+    end
+    model_attributes
+  end
+
+  def get_attributes_for_update(model_attributes, model)
+    update_attributes = {}
+    hash_attributes   = params.slice(*model_attributes)
+    hash_attributes.each{ |attr, val| update_attributes[attr.gsub(/#{self.class.snake(model.to_s)}_(.*)/, '\1')] = val }
+    update_attributes
   end
 
   def get_model_for_save
     keys = params.keys
     models = []
-    get_models.each do |model|
+    array_of_models.each do |model|
       model.column_names.each do |name|
         keys.each do |key|
           models << model if key.to_s == "#{self.class.snake(model.to_s)}_#{name}"

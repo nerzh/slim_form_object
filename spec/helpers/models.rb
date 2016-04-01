@@ -31,6 +31,4 @@ end
 class TestOneFourModel < ActiveRecord::Base
   belongs_to :test_one_model
   belongs_to :test_four_model
-
-  validates :title, :descr, presence: true
 end
