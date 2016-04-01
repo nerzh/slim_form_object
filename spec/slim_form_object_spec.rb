@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'helpers/models'
-require 'byebug'
 
 class TestModule
   include ActiveModel::Model
