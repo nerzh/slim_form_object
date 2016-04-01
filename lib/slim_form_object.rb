@@ -3,6 +3,7 @@ require "slim_form_object/version"
 module SlimFormObject
 
   def self.included(base)
+    base.include(ActiveModel::Model)
     base.extend(ClassMethods)
   end
 
