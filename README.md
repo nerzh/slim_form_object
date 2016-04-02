@@ -87,13 +87,11 @@ Or install it yourself as:
     class ReviewController < ApplicationController
 
       def new
-        @user = current_user
-        @reviewForm = ReviewForm.new(current_user: @user)
+        @reviewForm = ReviewForm.new(current_user: current_user)
       end
     
       def create
-        user = current_user
-        reviewForm = ReviewForm.new(params: params_review, current_user: user)
+        reviewForm = ReviewForm.new(params: params_review, current_user: current_user)
         reviewForm.submit
         reviewForm.save ? (render json: {status: 200}) : (render json: reviewForm.errors, status: :unprocessable_entity)
       end
