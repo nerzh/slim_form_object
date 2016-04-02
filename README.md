@@ -22,7 +22,7 @@ Or install it yourself as:
 ## Usage
 ```ruby
 
-# Model User
+# e.g. Model User
     class User < ActiveRecord::Base
     
       devise :database_authenticatable, :registerable,
@@ -33,7 +33,7 @@ Or install it yourself as:
     
     end
 
-# Model ReviewBook
+# e.g. Model ReviewBook
 
     class ReviewBook < ActiveRecord::Base
     
@@ -45,7 +45,7 @@ Or install it yourself as:
     
     end
 
-# model Rating
+# e.g. model Rating
 
     class Rating < ActiveRecord::Base
     
@@ -119,7 +119,11 @@ example name of attributes: name_model_name_atribute (e.g. review_book and theme
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/slim_form_object.
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
 
 
 ## License
