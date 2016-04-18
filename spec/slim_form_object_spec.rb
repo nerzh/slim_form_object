@@ -154,7 +154,7 @@ describe TestModule do
     it 'errors is present' do
       object.stub(:test_one_model).and_return( TestOneModel.new(descr: 'desc') )
 
-      expect(object).to receive(:get_model_for_save).and_return([TestOneModel])
+      expect(object).to receive(:array_of_models).and_return([TestOneModel])
       expect(object).to receive(:set_errors).and_return( true )
       object.send :validation_models
     end
@@ -162,7 +162,7 @@ describe TestModule do
     it 'errors is not exist' do
       object.stub(:test_one_model).and_return( TestOneModel.new(title: 'title', descr: 'desc') )
 
-      expect(object).to receive(:get_model_for_save).and_return([TestOneModel])
+      expect(object).to receive(:array_of_models).and_return([TestOneModel])
       expect(object).not_to receive(:set_errors)
       object.send :validation_models
     end
@@ -176,6 +176,7 @@ describe TestModule do
       expect(object).to receive(:array_of_models).and_return( [TestOneModel] )
       expect(object).to receive(:make_attributes_of_model).and_return( attributes_of_model )
       expect(object).to receive(:get_attributes_for_update).and_return( attributes_for_update )
+      expect(object).to receive(:assign_attributes_for_collection).and_return( true )
       object.stub(:test_one_model).and_return( TestOneModel.new )
       object.send :update_attributes
     end
@@ -199,19 +200,42 @@ describe TestModule do
     end
   end
 
-  context 'get_model_for_save' do
-    it 'get models from params (exist)' do
-      object.stub(:array_of_models).and_return( [TestOneModel, TestTwoModel, TestThreeModel] )
-      object.stub(:params).and_return( {'test_one_model_title'=>'Test Title', 'test_two_model_descr'=>'Test Descr'} )
-
-      expect(object.send :get_model_for_save).to eq( [TestOneModel, TestTwoModel] )
+  context 'assign_attributes_for_collection' do
+    before :each do
+      @test_object = TestOneModel.new
+      (1...4).each { TestFourModel.create(title:'title', descr:'descr') }
     end
 
-    it 'get models from params (must be return empty array)' do
-      object.stub(:array_of_models).and_return( [TestOneModel, TestTwoModel, TestThreeModel] )
-      object.stub(:params).and_return( {} )
+    it 'assign attributes for test_one_model' do
+      object.stub(:params).and_return( {test_one_model_test_four_model_ids: [1, 2, 3]} )
+      object.stub_chain(:method, :call) { @test_object }
+      object.stub(:keys_of_collections).and_return( [:test_one_model_test_four_model_ids] )
+      object.send(:assign_attributes_for_collection, TestOneModel)
 
-      expect(object.send :get_model_for_save).to eq( [] )
+      expect(@test_object.test_four_model_ids).to eq( [1, 2, 3] )
+    end
+
+    it 'must don\'t assign attributes for test_one_model' do
+      object.stub(:params).and_return( {test_ids: [1], _ids: [1], ids_test: [1], test_one_model_test_four_model_idss: [1], test_ids_one: [1]} )
+      object.stub_chain(:method, :call) { @test_object }
+      object.stub(:keys_of_collections).and_return( [:test_ids, :_ids, :ids_test, :test_one_model_test_four_model_idss, :test_ids_one] )
+      object.send(:assign_attributes_for_collection, TestOneModel)
+
+      expect(@test_object.test_four_model_ids).to eq( [] )
+    end
+  end
+
+  context 'keys_of_collections' do
+    it 'must be return array with values' do
+      object.stub(:params).and_return( {test_one_model_test_four_model_ids: [1, 2, 3]} )
+
+      expect(object.send :keys_of_collections).to eq( [:test_one_model_test_four_model_ids] )
+    end
+
+    it 'must be return array without values' do
+      object.stub(:params).and_return( {_ids: [1], ids_test: [1], test_one_model_test_four_model_idss: [1], test_ids_one: [1]} )
+
+      expect(object.send :keys_of_collections).to eq( [] )
     end
   end
 

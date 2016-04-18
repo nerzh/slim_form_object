@@ -5,6 +5,7 @@ require 'active_record'
 require 'rspec/collection_matchers'
 require 'database_cleaner'
 require 'helpers/connect_to_base'
+require 'byebug'
 
 RSpec.configure do |config|
 

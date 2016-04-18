@@ -113,7 +113,7 @@ module SlimFormObject
   end
 
   def keys_of_collections
-    params.keys.select{ |key| key =~ /_ids$/ }
+    params.keys.select{ |key| key =~ /^.+_ids$/ }
   end
 
   def assign_attributes_for_collection(model)
