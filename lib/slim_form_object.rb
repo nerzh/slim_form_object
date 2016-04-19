@@ -37,6 +37,7 @@ module SlimFormObject
 
   def submit
     update_attributes
+    update_attributes_for_collection
   end
 
   def save
@@ -89,7 +90,31 @@ module SlimFormObject
     array_of_models.each do |model|
       model_attributes = make_attributes_of_model(model)
       method( snake(model.to_s) ).call.assign_attributes( get_attributes_for_update(model_attributes, model) )
+    end
+  end
+
+  def update_attributes_for_collection
+    array_of_models.each do |model|
       assign_attributes_for_collection(model)
+    end
+  end
+
+  def keys_of_collections
+    params.keys.select{ |key| key =~ /^.+_ids$/ }
+  end
+
+  def assign_attributes_for_collection(model)
+    self_object_of_model = method( snake(model.to_s) ).call
+
+    keys_of_collections.each do |key|
+      key.to_s =~ /#{snake(model.to_s)}_(.*)/
+      if self_object_of_model.respond_to? $1.to_s
+        old_attribute = self_object_of_model.method( $1 ).call
+        unless self_object_of_model.update_attributes( {$1.to_s => params[key]} )
+          set_errors(self_object_of_model.errors)
+          self_object_of_model.update_attributes( {$1.to_s => old_attribute} )
+        end if valid?
+      end
     end
   end
 
@@ -110,21 +135,6 @@ module SlimFormObject
 
   def get_association(class1, class2)
     class1.reflections.slice(snake(class2.to_s), class2.table_name).values.first.try(:macro)
-  end
-
-  def keys_of_collections
-    params.keys.select{ |key| key =~ /^.+_ids$/ }
-  end
-
-  def assign_attributes_for_collection(model)
-    self_object_of_model = method( snake(model.to_s) ).call
-
-    keys_of_collections.each do |key|
-      key.to_s =~ /#{snake(model.to_s)}_(.*)/
-      if self_object_of_model.respond_to? $1.to_s
-        self_object_of_model.assign_attributes( {$1.to_s => params[key]} )
-      end
-    end
   end
 
 end

@@ -176,7 +176,6 @@ describe TestModule do
       expect(object).to receive(:array_of_models).and_return( [TestOneModel] )
       expect(object).to receive(:make_attributes_of_model).and_return( attributes_of_model )
       expect(object).to receive(:get_attributes_for_update).and_return( attributes_for_update )
-      expect(object).to receive(:assign_attributes_for_collection).and_return( true )
       object.stub(:test_one_model).and_return( TestOneModel.new )
       object.send :update_attributes
     end
@@ -202,7 +201,7 @@ describe TestModule do
 
   context 'assign_attributes_for_collection' do
     before :each do
-      @test_object = TestOneModel.new
+      @test_object = TestOneModel.create(title:'title', descr:'descr')
       (1...4).each { TestFourModel.create(title:'title', descr:'descr') }
     end
 
