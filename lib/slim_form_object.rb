@@ -100,20 +100,29 @@ module SlimFormObject
   end
 
   def keys_of_collections
-    params.keys.select{ |key| key =~ /^.+_ids$/ }
+    @keys ||= params.keys.select{ |key| key =~ /^.+_ids$/ }
+  end
+
+  def exist_any_arrors_without_collections?(model)
+    keys_of_collections.each do |key|
+      name_of_model = key.to_s[/^#{snake(model.to_s)}_(.*)_ids$/, 1].split('_').map(&:capitalize).join
+      name_of_key_error = Object.const_get(name_of_model).table_name
+      errors.messages.delete(name_of_key_error.to_sym)
+    end unless valid?
+    errors.messages.empty?
   end
 
   def assign_attributes_for_collection(model)
     self_object_of_model = method( snake(model.to_s) ).call
 
     keys_of_collections.each do |key|
-      key.to_s =~ /#{snake(model.to_s)}_(.*)/
-      if self_object_of_model.respond_to? $1.to_s
-        old_attribute = self_object_of_model.method( $1 ).call
-        unless self_object_of_model.update_attributes( {$1.to_s => params[key]} )
+      method_name = key.to_s[/#{snake(model.to_s)}_(.*)/, 1]
+      if self_object_of_model.respond_to? method_name.to_s
+        old_attribute = self_object_of_model.method( method_name ).call
+        unless self_object_of_model.update_attributes( {method_name.to_s => params[key]} )
           set_errors(self_object_of_model.errors)
-          self_object_of_model.update_attributes( {$1.to_s => old_attribute} )
-        end if valid?
+          self_object_of_model.update_attributes( {method_name.to_s => old_attribute} )
+        end if exist_any_arrors_without_collections?(model)
       end
     end
   end
