@@ -126,7 +126,7 @@ example name of attributes: name_model_name_atribute (e.g. review_book and theme
         = f.text_field   :review_book_text,  placeholder: "Text",   class: 'form-control input-checkout'
 
         # For collection you must to use _ids in your name attributes, e.g. :
-        = f.collection_select(:user_address_ids, Address.all, :id, :pole, {selected: @settings_form.user.address_ids}, {multiple: true, class: "form-control input-address"})
+        = f.collection_select(:user_address_ids, Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true, class: "form-control input-address"})
 
         = f.submit 'Create review',                                 class: 'form-control btn btn-success'
 
