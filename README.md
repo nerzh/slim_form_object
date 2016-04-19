@@ -30,6 +30,9 @@ Or install it yourself as:
     
       has_many :review_books, dependent: :delete_all
       has_many :ratings,      dependent: :delete_all
+      
+      has_and_belongs_to_many :addresses
+      validates :addresses,  presence: true
     
     end
 
@@ -53,6 +56,14 @@ Or install it yourself as:
       belongs_to :review_book
     
       validates  :ratings, presence: true
+    
+    end
+
+# e.g. model Address
+
+    class Address < ActiveRecord::Base
+    
+      has_and_belongs_to_many :users
     
     end
 
@@ -113,6 +124,10 @@ example name of attributes: name_model_name_atribute (e.g. review_book and theme
         = f.number_field :rating_ratings,    placeholder: "Rating", class: 'form-control input-checkout'
         = f.text_field   :review_book_theme, placeholder: "Theme",  class: 'form-control input-checkout'
         = f.text_field   :review_book_text,  placeholder: "Text",   class: 'form-control input-checkout'
+
+        # For collection you must to use _ids in your name attributes, e.g. :
+        = f.collection_select(:user_address_ids, Address.all, :id, :pole, {selected: @settings_form.user.address_ids}, {multiple: true, class: "form-control input-address"})
+
         = f.submit 'Create review',                                 class: 'form-control btn btn-success'
 
 ```
