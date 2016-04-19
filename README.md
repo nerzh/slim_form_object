@@ -25,11 +25,8 @@ Or install it yourself as:
 # e.g. Model User
     class User < ActiveRecord::Base
     
-      devise :database_authenticatable, :registerable,
-             :recoverable, :rememberable, :trackable, :validatable, :omniauthable
-    
-      has_many :review_books, dependent: :delete_all
-      has_many :ratings,      dependent: :delete_all
+      has_many :review_books
+      has_many :ratings
       
       has_and_belongs_to_many :addresses
       validates :addresses,  presence: true
