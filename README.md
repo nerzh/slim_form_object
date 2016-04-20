@@ -95,7 +95,7 @@ Or install it yourself as:
       private
     
       def params_review
-        params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text)
+        params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text, :user_address_ids => [])
       end
     end
     
