@@ -260,7 +260,7 @@ describe TestModule do
       expect(object.send :exist_any_arrors_without_collections?).to eq( true )
     end
 
-    it 'must be return true' do
+    it 'must be return false' do
       object.instance_eval do
         def test_one_model
           TestThreeModel.create(title:'title', descr:'')
