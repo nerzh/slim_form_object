@@ -100,14 +100,26 @@ module SlimFormObject
   end
 
   def keys_of_collections
-    @keys ||= params.keys.select{ |key| key =~ /^.+_ids$/ }
+    @keys ||= []
+    params.keys.each do |key|
+      array_of_models.each do |model|
+        self_object_of_model = method( snake(model.to_s) ).call
+        method_name = key.to_s[/#{snake(model.to_s)}_(.*)/, 1]
+        @keys << method_name if self_object_of_model.respond_to? method_name.to_s
+      end if key[/^.+_ids$/]
+    end if @keys.empty?
+    @keys
   end
 
-  def exist_any_arrors_without_collections?(model)
-    keys_of_collections.each do |key|
-      name_of_model = key.to_s[/^#{snake(model.to_s)}_(.*)_ids$/, 1].split('_').map(&:capitalize).join
-      name_of_key_error = Object.const_get(name_of_model).table_name
-      errors.messages.delete(name_of_key_error.to_sym)
+  def exist_any_arrors_without_collections?
+    keys_of_collections.each do |method_name|
+      array_of_models.each do |model|
+        self_object_of_model = method( snake(model.to_s) ).call
+        name_of_model = method_name.to_s[/^(.+)_ids$/, 1]
+        name_of_constant_model = name_of_model.split('_').map(&:capitalize).join
+        name_of_key_error = Object.const_get(name_of_constant_model).table_name
+        errors.messages.delete(name_of_key_error.to_sym)
+      end
     end unless valid?
     errors.messages.empty?
   end
@@ -115,14 +127,13 @@ module SlimFormObject
   def assign_attributes_for_collection(model)
     self_object_of_model = method( snake(model.to_s) ).call
 
-    keys_of_collections.each do |key|
-      method_name = key.to_s[/#{snake(model.to_s)}_(.*)/, 1]
-      if self_object_of_model.respond_to? method_name.to_s
+    keys_of_collections.each do |method_name|
+      if self_object_of_model.respond_to? method_name
         old_attribute = self_object_of_model.method( method_name ).call
-        unless self_object_of_model.update_attributes( {method_name.to_s => params[key]} )
+        unless self_object_of_model.update_attributes( {method_name.to_s => params["#{snake(model.to_s)}_#{method_name}".to_sym]} )
           set_errors(self_object_of_model.errors)
           self_object_of_model.update_attributes( {method_name.to_s => old_attribute} )
-        end if exist_any_arrors_without_collections?(model)
+        end if exist_any_arrors_without_collections?
       end
     end
   end

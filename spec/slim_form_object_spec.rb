@@ -208,7 +208,7 @@ describe TestModule do
     it 'assign attributes for test_one_model' do
       object.stub(:params).and_return( {test_one_model_test_four_model_ids: [1, 2, 3]} )
       object.stub_chain(:method, :call) { @test_object }
-      object.stub(:keys_of_collections).and_return( [:test_one_model_test_four_model_ids] )
+      object.stub(:keys_of_collections).and_return( ['test_four_model_ids'] )
       object.send(:assign_attributes_for_collection, TestOneModel)
 
       expect(@test_object.test_four_model_ids).to eq( [1, 2, 3] )
@@ -227,14 +227,51 @@ describe TestModule do
   context 'keys_of_collections' do
     it 'must be return array with values' do
       object.stub(:params).and_return( {test_one_model_test_four_model_ids: [1, 2, 3]} )
+      object.stub_chain(:method, :call) { TestOneModel.create(title:'title', descr:'descr') }
 
-      expect(object.send :keys_of_collections).to eq( [:test_one_model_test_four_model_ids] )
+      expect(object.send :keys_of_collections).to eq( ['test_four_model_ids'] )
     end
 
     it 'must be return array without values' do
       object.stub(:params).and_return( {_ids: [1], ids_test: [1], test_one_model_test_four_model_idss: [1], test_ids_one: [1]} )
 
       expect(object.send :keys_of_collections).to eq( [] )
+    end
+  end
+
+  context 'exist_any_arrors_without_collections?' do
+    before :each do
+      object.instance_eval do
+        def test_one_model
+          TestOneModel.create(title:'title', descr:'descr')
+        end
+        def test_four_model
+          TestFourModel.create(title:'title', descr:'descr')
+        end
+      end
+    end
+
+    it 'must be return true' do
+      object.stub(:keys_of_collections).and_return( ['test_one_model_ids', 'test_four_model_ids'] )
+      object.stub(:array_of_models).and_return( [TestOneModel, TestFourModel] )
+      object.stub(:valid?).and_return( false )
+      object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error'} )
+
+      expect(object.send :exist_any_arrors_without_collections?).to eq( true )
+    end
+
+    it 'must be return true' do
+      object.instance_eval do
+        def test_one_model
+          TestThreeModel.create(title:'title', descr:'')
+        end
+      end
+      object.stub(:keys_of_collections).and_return( ['test_one_model_ids', 'test_four_model_ids'] )
+      object.stub(:array_of_models).and_return( [TestOneModel, TestFourModel] )
+      object.stub(:valid?).and_return( false )
+      object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error', :descr=>'error'} )
+
+      expect(object.send :exist_any_arrors_without_collections?).to eq( false )
     end
   end
 
