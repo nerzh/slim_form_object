@@ -24,47 +24,36 @@ Or install it yourself as:
 
 # e.g. Model User
     class User < ActiveRecord::Base
-    
       has_many :review_books
       has_many :ratings
       
       has_and_belongs_to_many :addresses
       validates :addresses,  presence: true
-    
     end
 
 # e.g. Model ReviewBook
-
     class ReviewBook < ActiveRecord::Base
-    
       belongs_to :user
       has_one    :rating, dependent: :delete
     
       validates :text,  presence: true, length: { maximum: 400 }
       validates :theme, presence: true, length: { maximum: 150 }
-    
     end
 
 # e.g. model Rating
-
     class Rating < ActiveRecord::Base
-    
       belongs_to :user
       belongs_to :review_book
     
       validates  :ratings, presence: true
-    
     end
 
 # e.g. model Address
-
     class Address < ActiveRecord::Base
-    
       has_and_belongs_to_many :users
-    
     end
 
-# class FormObject
+# EXAMPLE CLASS OF Form Object
 
     class ReviewForm
       include SlimFormObject
@@ -87,10 +76,9 @@ Or install it yourself as:
         #hash of attributes
         self.params           = params
       end
-    
     end
     
-# review_controller
+# EXAMPLE CONTROLLER review_controller
  
     class ReviewController < ApplicationController
 
