@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["roboucrop@gmail.com"]
 
   spec.summary       = %q{This is form object}
-  spec.description   = %q{It's works}
+  spec.description   = %q{Automatic generation and saving of your models html attributes}
   spec.homepage      = "https://github.com/woodcrust/slim_form_object"
   spec.license       = "MIT"
 
