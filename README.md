@@ -61,11 +61,11 @@ Or install it yourself as:
       
       #name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
       set_model_name('ReviewBook')
-      #models which will be updated
+      #must be list of models you want to update
       init_models User, Rating, ReviewBook
     
-      # create objects for models
       def initialize(params: {}, current_user: nil)
+        # create the objects of models which will be saved
         self.user             = current_user
         self.review_book      = ReviewBook.new
         self.rating           = Rating.new
