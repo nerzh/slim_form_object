@@ -35,9 +35,10 @@ module SlimFormObject
     end
 
     def set_model_name(name)
+      @@set_name = name
       class << self
         def model_name
-          ActiveModel::Name.new(self, nil, name.to_s)
+          ActiveModel::Name.new(self, nil, @@set_name.to_s)
         end
       end
     end
