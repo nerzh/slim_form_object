@@ -3,7 +3,7 @@
 
 Welcome to your new gem for fast save data of your html forms .
 
-## Installation
+# Installation
 
 Add this line to your application's Gemfile:
 
@@ -19,51 +19,47 @@ Or install it yourself as:
 
     $ gem install slim_form_object
 
-## Usage
+# Usage
+## e.g. Model User
+/app/models/user.rb
 ```ruby
-
-# e.g. Model User
     class User < ActiveRecord::Base
       has_many :review_books
       has_many :ratings
-      
       has_and_belongs_to_many :addresses
-      validates :addresses,  presence: true
     end
-
-# e.g. Model ReviewBook
+```
+## e.g. Model ReviewBook
+/app/models/review_book.rb
+```ruby
     class ReviewBook < ActiveRecord::Base
       belongs_to :user
-      has_one    :rating, dependent: :delete
-    
-      validates :text,  presence: true, length: { maximum: 400 }
-      validates :theme, presence: true, length: { maximum: 150 }
+      has_one    :rating
     end
-
-# e.g. model Rating
+```
+## e.g. model Rating
+/app/models/rating.rb
+```ruby
     class Rating < ActiveRecord::Base
       belongs_to :user
       belongs_to :review_book
-    
-      validates  :ratings, presence: true
     end
-
-# e.g. model Address
+## e.g. model Address
+/app/models/address.rb
+```ruby
     class Address < ActiveRecord::Base
       has_and_belongs_to_many :users
     end
-
-# EXAMPLE CLASS OF Form Object
-
+```
+## EXAMPLE CLASS of Form Object for review_controller
+/app/forms/review_form.rb
+```ruby
     class ReviewForm
       include SlimFormObject
       validate :validation_models
       
-      #name params for params.require(:NAME).permit(...) e.g. 'ReviewBook'
-      def self.model_name
-        ActiveModel::Name.new(self, nil, "ReviewBook")
-      end
-    
+      #name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
+      set_model_name('ReviewBook')
       #models which will be updated
       init_models User, Rating, ReviewBook
     
@@ -77,11 +73,11 @@ Or install it yourself as:
         self.params           = params
       end
     end
-    
-# EXAMPLE CONTROLLER review_controller
- 
+```
+## EXAMPLE CONTROLLER of review_controller
+/app/forms/review_controller.rb
+ ```ruby
     class ReviewController < ApplicationController
-
       def new
         @reviewForm = ReviewForm.new(current_user: current_user)
       end
@@ -89,7 +85,11 @@ Or install it yourself as:
       def create
         reviewForm = ReviewForm.new(params: params_review, current_user: current_user)
         reviewForm.submit
-        reviewForm.save ? (render json: {status: 200}) : (render json: reviewForm.errors, status: :unprocessable_entity)
+        if reviewForm.save
+          render json: {status: 200}
+        else
+          render json: reviewForm.errors, status: 422
+        end
       end
     
       private
@@ -98,23 +98,32 @@ Or install it yourself as:
         params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text, :user_address_ids => [])
       end
     end
-    
 ```
 
-```haml
-# HTML FORM (Haml)
-example name of attributes: name_model_name_atribute (e.g. review_book and theme => review_book_theme)
 
+## HTML FORM (Haml)
+
+!!! this naming should be to successfully save your models !!!
+
+example name of attributes: 
+name_model and name_attribute_of_your_model => name_model_name_attribute_of_your_model 
+
+e.g. review_book and theme => review_book_theme  or  rating and value => rating_value
+```haml
       = form_for @reviewForm, url: reviews_path, method: 'POST', html: {class: 'form-control'} do |f|
-        = f.number_field :rating_ratings,    placeholder: "Rating", class: 'form-control input-checkout'
+        = f.number_field :rating_value,      placeholder: "Rating", class: 'form-control input-checkout'
         = f.text_field   :review_book_theme, placeholder: "Theme",  class: 'form-control input-checkout'
         = f.text_field   :review_book_text,  placeholder: "Text",   class: 'form-control input-checkout'
+```
+## FOR COLLECTION you must to use _ids in your name attributes:
 
-        # For collection you must to use _ids in your name attributes, e.g. :
+name_model and name_attribute_of_your_model and ids => name_model_name_attribute_of_your_model_ids 
+
+e.g. user and address and ids => user_address_ids
+```haml
         = f.collection_select(:user_address_ids, Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true, class: "form-control input-address"})
 
         = f.submit 'Create review',                                 class: 'form-control btn btn-success'
-
 ```
 
 ## Contributing
