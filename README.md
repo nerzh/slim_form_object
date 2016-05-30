@@ -70,7 +70,7 @@ Or install it yourself as:
         self.review_book      = ReviewBook.new
         self.rating           = Rating.new
         
-        #hash of attributes
+        #hash of http parameters must be for automatic save input attributes 
         self.params           = params
       end
     end
