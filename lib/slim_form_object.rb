@@ -33,6 +33,14 @@ module SlimFormObject
         end
       end
     end
+
+    def set_model_name(name)
+      class << self
+        def model_name
+          ActiveModel::Name.new(self, nil, name.to_s)
+        end
+      end
+    end
   end
 
   def submit
