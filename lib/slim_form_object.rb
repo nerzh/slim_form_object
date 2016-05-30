@@ -123,7 +123,6 @@ module SlimFormObject
   def exist_any_arrors_without_collections?
     keys_of_collections.each do |method_name|
       array_of_models.each do |model|
-        self_object_of_model = method( snake(model.to_s) ).call
         name_of_model = method_name.to_s[/^(.+)_ids$/, 1]
         name_of_constant_model = name_of_model.split('_').map(&:capitalize).join
         name_of_key_error = Object.const_get(name_of_constant_model).table_name
