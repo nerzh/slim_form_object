@@ -107,9 +107,9 @@ Or install it yourself as:
 !!! this naming should be to successfully save your models !!!
 
 example name of attributes: 
-name_model and name_attribute_of_your_model => name_model_name_attribute_of_your_model 
+name_model & name_attribute_of_your_model => name_model_name_attribute_of_your_model 
 
-e.g. *review_book* and *theme* => **review_book_theme** or *rating* and *value* => **rating_value**
+e.g. *review_book* & *theme* => **review_book_theme** OR *rating* & *value* => **rating_value**
 ```haml
       = form_for @reviewForm, url: reviews_path, method: 'POST', html: {class: 'form-control'} do |f|
         = f.number_field :rating_value,      placeholder: "Rating", class: 'form-control input-checkout'
@@ -118,9 +118,9 @@ e.g. *review_book* and *theme* => **review_book_theme** or *rating* and *value* 
 ```
 ## FOR COLLECTION you must to use _ids in your name attributes:
 
-*name_model* and *name_attribute_of_your_model* and *ids* => **name_model_name_attribute_of_your_model_ids** 
+*name_model* & *name_attribute_of_your_model* & *ids* => **name_model_name_attribute_of_your_model_ids** 
 
-e.g. *user* and *address* and *ids* => **user_address_ids**
+e.g. *user* & *address* & *ids* => **user_address_ids**
 ```haml
         = f.collection_select(:user_address_ids, Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true, class: "form-control input-address"})
 
