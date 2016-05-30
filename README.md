@@ -57,8 +57,9 @@ Or install it yourself as:
 ```ruby
     class ReviewForm
       include SlimFormObject
+
+      #if you want to save validations of your models - optional
       validate :validation_models
-      
       #name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
       set_model_name('ReviewBook')
       #must be list of models you want to update
