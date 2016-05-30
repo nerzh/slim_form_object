@@ -124,7 +124,7 @@ e.g. *user* & *address* & *ids* => **user_address_ids**
 ```haml
         = f.collection_select(:user_address_ids, Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true, class: "form-control input-address"})
 
-        = f.submit 'Create review',                                 class: 'form-control btn btn-success'
+        = f.submit 'Create review', class: 'form-control btn btn-success'
 ```
 
 ## Contributing
