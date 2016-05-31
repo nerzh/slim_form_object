@@ -58,12 +58,9 @@ Or install it yourself as:
     class ReviewForm
       include SlimFormObject
 
-      #if you want to save validations of your models - optional
-      validate :validation_models
-      #name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
-      set_model_name('ReviewBook')
-      #must be list of models you want to update
-      init_models User, Rating, ReviewBook
+      validate :validation_models     # if you want to save validations of your models - optional
+      set_model_name('ReviewBook')    # name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
+      init_models User, Rating, ReviewBook     # must be list of models you want to update
     
       def initialize(params: {}, current_user: nil)
         # create the objects of models which will be saved
@@ -86,7 +83,7 @@ Or install it yourself as:
     
       def create
         reviewForm = ReviewForm.new(params: params_review, current_user: current_user)
-        reviewForm.submit
+        reviewForm.apply_parameters     # assign attributes of *params*
         if reviewForm.save
           render json: {status: 200}
         else

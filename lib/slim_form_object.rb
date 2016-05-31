@@ -49,6 +49,8 @@ module SlimFormObject
     update_attributes_for_collection
   end
 
+  alias_method :apply_parameters, :submit
+
   def save
     if valid?
       models = Array.new(array_of_models)
