@@ -3,6 +3,10 @@
 
 Welcome to your new gem for fast save data of your html forms. Very simple automatic generation and saving of your models nested attributes. With ActiveModel.
 
+Do you have a questions ? You can write me:
+<mailto:info@inclouds.com.ua>
+[Issues](https://github.com/woodcrust/slim_form_object/issues "Issues from Slim Form Object")
+
 # Installation
 
 Add this line to your application's Gemfile:
