@@ -83,7 +83,7 @@ Or install it yourself as:
     
       def create
         reviewForm = ReviewForm.new(params: params_review, current_user: current_user)
-        reviewForm.apply_parameters     # assign attributes of *params*
+        reviewForm.apply_parameters     # assign attributes of *params*. Will return the instance of ReviewForm with assigned attributes
         if reviewForm.save
           render json: {status: 200}
         else
