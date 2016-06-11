@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["roboucrop@gmail.com"]
 
   spec.summary       = %q{This is form object}
-  spec.description   = %q{Very simple automatic generation and saving of your models nested attributes. For ActiveModel.}
+  spec.description   = %q{Very simple automatic generation and saving nested attributes of models from html form. ActiveModel.}
   spec.homepage      = "https://github.com/woodcrust/slim_form_object"
   spec.license       = "MIT"
 
