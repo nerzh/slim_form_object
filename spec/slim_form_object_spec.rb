@@ -239,7 +239,7 @@ describe TestModule do
     end
   end
 
-  context 'exist_any_arrors_without_collections?' do
+  context 'exist_any_errors_without_collections?' do
     before :each do
       object.instance_eval do
         def test_one_model
@@ -257,7 +257,7 @@ describe TestModule do
       object.stub(:valid?).and_return( false )
       object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error'} )
 
-      expect(object.send :exist_any_arrors_without_collections?).to eq( true )
+      expect(object.send :exist_any_errors_without_collections?).to eq( true )
     end
 
     it 'must be return false' do
@@ -271,7 +271,7 @@ describe TestModule do
       object.stub(:valid?).and_return( false )
       object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error', :descr=>'error'} )
 
-      expect(object.send :exist_any_arrors_without_collections?).to eq( false )
+      expect(object.send :exist_any_errors_without_collections?).to eq( false )
     end
   end
 
