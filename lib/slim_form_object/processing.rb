@@ -32,12 +32,7 @@ module SlimFormObject
     end
 
     def set_model_name(name)
-      @@set_name = name
-      class << self
-        def model_name
-          ActiveModel::Name.new(self, nil, @@set_name.to_s)
-        end
-      end
+      define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
     end
   end
 
@@ -113,19 +108,19 @@ module SlimFormObject
     params.keys.each do |key|
       array_of_models.each do |model|
         self_object_of_model = method( snake(model.to_s) ).call
-        method_name = key.to_s[/#{snake(model.to_s)}_(.*)/, 1]
+        method_name          = key.to_s[/#{snake(model.to_s)}_(.*)/, 1]
         @keys << method_name if self_object_of_model.respond_to? method_name.to_s
       end if key[/^.+_ids$/]
     end if @keys.empty?
     @keys
   end
 
-  def exist_any_arrors_without_collections?
+  def exist_any_errors_without_collections?
     keys_of_collections.each do |method_name|
       array_of_models.each do |model|
-        name_of_model = method_name.to_s[/^(.+)_ids$/, 1]
+        name_of_model          = method_name.to_s[/^(.+)_ids$/, 1]
         name_of_constant_model = name_of_model.split('_').map(&:capitalize).join
-        name_of_key_error = Object.const_get(name_of_constant_model).table_name
+        name_of_key_error      = Object.const_get(name_of_constant_model).table_name
         errors.messages.delete(name_of_key_error.to_sym)
       end
     end unless valid?
@@ -141,7 +136,7 @@ module SlimFormObject
         unless self_object_of_model.update_attributes( {method_name.to_s => params["#{snake(model.to_s)}_#{method_name}".to_sym]} )
           set_errors(self_object_of_model.errors)
           self_object_of_model.update_attributes( {method_name.to_s => old_attribute} )
-        end if exist_any_arrors_without_collections?
+        end if exist_any_errors_without_collections?
       end
     end
   end
