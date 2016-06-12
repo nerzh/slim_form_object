@@ -8,7 +8,7 @@ Welcome to your new gem for fast save data of your html forms. Very simple autom
 New features or have any questions, write here:
 [![Join the chat at https://gitter.im/woodcrust/slim_form_object](https://badges.gitter.im/woodcrust/slim_form_object.svg)](https://gitter.im/woodcrust/slim_form_object?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-# to read the [WIKI](https://github.com/woodcrust/slim_form_object/wiki) with images about slim form object
+## to read the [WIKI](https://github.com/woodcrust/slim_form_object/wiki) with images about slim form object
 
 # Installation
 
