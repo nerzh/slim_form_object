@@ -10,8 +10,6 @@ New features or have any questions, write here:
 
 ## to read the [WIKI](https://github.com/woodcrust/slim_form_object/wiki) with images about slim form object
 
-p.s. and give me star if you like it :)
-
 # Installation
 
 Add this line to your application's Gemfile:
