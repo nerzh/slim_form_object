@@ -10,7 +10,7 @@ New features or have any questions, write here:
 
 ## to read the [WIKI](https://github.com/woodcrust/slim_form_object/wiki) with images about slim form object
 
-p.s. and give me star if you like it :)
+p.s. click on the star, and I will know that you are using it, thanks
 
 # Installation
 
