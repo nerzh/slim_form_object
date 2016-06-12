@@ -8,6 +8,8 @@ Welcome to your new gem for fast save data of your html forms. Very simple autom
 New features or have any questions, write here:
 [![Join the chat at https://gitter.im/woodcrust/slim_form_object](https://badges.gitter.im/woodcrust/slim_form_object.svg)](https://gitter.im/woodcrust/slim_form_object?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+# to read the [WIKI](https://github.com/woodcrust/slim_form_object/wiki) with images about slim form object
+
 # Installation
 
 Add this line to your application's Gemfile:
@@ -113,21 +115,34 @@ example name of attributes:
 name_model & name_attribute_of_your_model => name_model_name_attribute_of_your_model 
 
 e.g. *review_book* & *theme* => **review_book_theme** OR *rating* & *value* => **rating_value**
-```haml
-      = form_for @reviewForm, url: reviews_path, method: 'POST', html: {class: 'form-control'} do |f|
-        = f.number_field :rating_value,      placeholder: "Rating", class: 'form-control input-checkout'
-        = f.text_field   :review_book_theme, placeholder: "Theme",  class: 'form-control input-checkout'
-        = f.text_field   :review_book_text,  placeholder: "Text",   class: 'form-control input-checkout'
+```yaml
+      = form_for @reviewForm, url: reviews_path, method: 'POST', html: {} do |f|
+        = f.number_field :rating_value,      placeholder: "Rating"
+        = f.text_field   :review_book_theme, placeholder: "Theme"
+        = f.text_field   :review_book_text,  placeholder: "Text"
 ```
-## FOR COLLECTION you must to use _ids in your name attributes:
+## FOR COLLECTION 
 
-*name_model* & *name_attribute_of_your_model* & *ids* => **name_model_name_attribute_of_your_model_ids** 
+WITH (multiple: true) - you must to use a attribute name_model_ids in your names of attributes:
 
-e.g. *user* & *address* & *ids* => **user_address_ids**
-```haml
-        = f.collection_select(:user_address_ids, Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true, class: "form-control input-address"})
+*name_model* & *name_attribute_of_your_model_ids* => **name_model_name_attribute_of_your_model_ids** 
 
-        = f.submit 'Create review', class: 'form-control btn btn-success'
+e.g. *user* & *address_ids* => **user_address_ids**
+```yaml
+        = f.collection_select(:user_address_ids, Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true})
+
+        = f.submit 'Create review'
+```
+
+WITH (multiple: false) - you must to use a attribute name_model_id in your names of attributes:
+
+*name_model* & *name_attribute_of_your_model_id* => **name_model_name_attribute_of_your_model_id** 
+
+e.g. *user* & *address_id* => **user_address_id**
+```yaml
+        = f.collection_select(:user_address_id, Address.all, :id, :column_name, {}, {})
+
+        = f.submit 'Create review'
 ```
 
 ## Contributing
