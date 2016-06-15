@@ -48,9 +48,8 @@ module SlimFormObject
     if valid?
       models = Array.new(array_of_models)
       while model1 = models.delete( models[0] )
-        array_of_models.each{ |model2| save_models(model1, model2) }
+        models.each{ |model2| save_models(model1, model2) }
       end
-
       return true
     end
     false
