@@ -37,6 +37,7 @@ module SlimFormObject
   end
 
   def submit
+    @array_of_models ||= array_of_models.reject{ |model| array_of_models_without_validates.include?(model) }
     update_attributes
     update_attributes_for_collection
     self
@@ -46,7 +47,7 @@ module SlimFormObject
 
   def save
     if valid?
-      models = Array.new(array_of_models)
+      models = Array.new(@array_of_models)
       while model1 = models.delete( models[0] )
         models.each{ |model2| save_models(model1, model2) }
       end
@@ -55,30 +56,28 @@ module SlimFormObject
     false
   end
 
+  def not_validate(*args)
+    define_singleton_method(:array_of_models_without_validates) { args }
+  end
+
   private
 
   def save_models(model1, model2)
     self_object_of_model1 = method( snake(model1.to_s) ).call
     self_object_of_model2 = method( snake(model2.to_s) ).call
+    association           = get_association(model1, model2)
 
-    case get_association(model1, model2)
-      when :belongs_to
-        self_object_of_model1.send( "#{snake(model2.to_s)}=", self_object_of_model2 )
-        self_object_of_model1.save!
-      when :has_one
-        self_object_of_model1.send( "#{snake(model2.to_s)}=", self_object_of_model2 )
-        self_object_of_model1.save!
-      when :has_many
-        self_object_of_model1.method("#{model2.table_name}").call << self_object_of_model2
-        self_object_of_model1.save!
-      when :has_and_belongs_to_many
-        self_object_of_model1.method("#{model2.table_name}").call << self_object_of_model2
-        self_object_of_model1.save!
+    if    association == :belongs_to or association == :has_one
+      self_object_of_model1.send( "#{snake(model2.to_s)}=", self_object_of_model2 )
+      self_object_of_model1.save!
+    elsif association == :has_many   or association == :has_and_belongs_to_many
+      self_object_of_model1.method("#{model2.table_name}").call << self_object_of_model2
+      self_object_of_model1.save!
     end
   end
 
   def validation_models
-    array_of_models.each do |model|
+    @array_of_models.each do |model|
       set_errors( method(snake(model.to_s)).call.errors ) unless method( snake(model.to_s) ).call.valid?
     end
   end
@@ -90,14 +89,14 @@ module SlimFormObject
   end
 
   def update_attributes
-    array_of_models.each do |model|
+    @array_of_models.each do |model|
       model_attributes = make_attributes_of_model(model)
       method( snake(model.to_s) ).call.assign_attributes( get_attributes_for_update(model_attributes, model) )
     end
   end
 
   def update_attributes_for_collection
-    array_of_models.each do |model|
+    @array_of_models.each do |model|
       assign_attributes_for_collection(model)
     end
   end
@@ -105,7 +104,7 @@ module SlimFormObject
   def keys_of_collections
     @keys ||= []
     params.keys.each do |key|
-      array_of_models.each do |model|
+      @array_of_models.each do |model|
         self_object_of_model = method( snake(model.to_s) ).call
         method_name          = key.to_s[/#{snake(model.to_s)}_(.*)/, 1]
         @keys << method_name if self_object_of_model.respond_to? method_name.to_s
@@ -116,7 +115,7 @@ module SlimFormObject
 
   def exist_any_errors_without_collections?
     keys_of_collections.each do |method_name|
-      array_of_models.each do |model|
+      @array_of_models.each do |model|
         name_of_model          = method_name.to_s[/^(.+)_ids$/, 1]
         name_of_constant_model = name_of_model.split('_').map(&:capitalize).join
         name_of_key_error      = Object.const_get(name_of_constant_model).table_name
