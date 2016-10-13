@@ -151,18 +151,18 @@ describe TestModule do
   end
 
   context 'validation_models' do
+    before do
+      object.instance_eval{ @array_of_models = [TestOneModel] }
+    end
+
     it 'errors is present' do
       object.stub(:test_one_model).and_return( TestOneModel.new(descr: 'desc') )
-
-      expect(object).to receive(:array_of_models).and_return([TestOneModel])
       expect(object).to receive(:set_errors).and_return( true )
       object.send :validation_models
     end
 
     it 'errors is not exist' do
       object.stub(:test_one_model).and_return( TestOneModel.new(title: 'title', descr: 'desc') )
-
-      expect(object).to receive(:array_of_models).and_return([TestOneModel])
       expect(object).not_to receive(:set_errors)
       object.send :validation_models
     end
@@ -173,7 +173,7 @@ describe TestModule do
       attributes_of_model = ["test_one_model_id", "test_one_model_title", "test_one_model_descr"]
       attributes_for_update = {"title"=>"Test Title", "descr"=>"Test Descr"}
 
-      expect(object).to receive(:array_of_models).and_return( [TestOneModel] )
+      object.instance_eval{ @array_of_models = [TestOneModel] }
       expect(object).to receive(:make_attributes_of_model).and_return( attributes_of_model )
       expect(object).to receive(:get_attributes_for_update).and_return( attributes_for_update )
       object.stub(:test_one_model).and_return( TestOneModel.new )
@@ -226,6 +226,7 @@ describe TestModule do
 
   context 'keys_of_collections' do
     it 'must be return array with values' do
+      object.instance_eval{ @array_of_models = [TestOneModel] }
       object.stub(:params).and_return( {test_one_model_test_four_model_ids: [1, 2, 3]} )
       object.stub_chain(:method, :call) { TestOneModel.create(title:'title', descr:'descr') }
 
@@ -248,12 +249,12 @@ describe TestModule do
         def test_four_model
           TestFourModel.create(title:'title', descr:'descr')
         end
+        @array_of_models = [TestOneModel, TestFourModel]
       end
     end
 
     it 'must be return true' do
       object.stub(:keys_of_collections).and_return( ['test_one_model_ids', 'test_four_model_ids'] )
-      object.stub(:array_of_models).and_return( [TestOneModel, TestFourModel] )
       object.stub(:valid?).and_return( false )
       object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error'} )
 
@@ -267,7 +268,6 @@ describe TestModule do
         end
       end
       object.stub(:keys_of_collections).and_return( ['test_one_model_ids', 'test_four_model_ids'] )
-      object.stub(:array_of_models).and_return( [TestOneModel, TestFourModel] )
       object.stub(:valid?).and_return( false )
       object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error', :descr=>'error'} )
 
