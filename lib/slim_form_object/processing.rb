@@ -37,7 +37,9 @@ module SlimFormObject
   end
 
   def submit
-    @array_of_models ||= array_of_models.reject{ |model| array_of_models_without_validates.include?(model) }
+    @array_of_models ||= array_of_models.reject do |model| 
+      array_of_models_without_validates.include?(model) if self.respond_to?(:array_of_models_without_validates)
+    end
     update_attributes
     update_attributes_for_collection
     self
@@ -155,7 +157,7 @@ module SlimFormObject
   end
 
   def get_association(class1, class2)
-    class1.reflections.slice(snake(class2.to_s), class2.table_name).values.first.try(:macro)
+    class1.reflections.slice(snake(class2.to_s), class2.table_name).values.first&.macro
   end
 
 end
