@@ -76,7 +76,13 @@ Or install it yourself as:
         self.rating           = Rating.new
         
         #hash of http parameters must be for automatic save input attributes 
-        self.params           = params
+        self.params           = parameters(params)
+      end
+      
+      # you can to check a params here
+      def parameters(params)
+        not_validate( Rating ) # e.g. if you do not want to check the model Rating
+        params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text, :user_address_ids => [])
       end
     end
 ```
@@ -90,7 +96,8 @@ Or install it yourself as:
     
       def create
         reviewForm = ReviewForm.new(params: params_review, current_user: current_user)
-        reviewForm.apply_parameters     # assign attributes of *params*. Will return the instance of ReviewForm with assigned attributes
+        reviewForm.not_validate( Rating ) # e.g. if you do not want to check the model Rating
+        reviewForm.apply_parameters       # assign attributes of *params*. Will return the instance of ReviewForm with assigned attributes
         if reviewForm.save
           render json: {status: 200}
         else
@@ -105,7 +112,6 @@ Or install it yourself as:
       end
     end
 ```
-
 
 ## HTML FORM (Haml)
 
