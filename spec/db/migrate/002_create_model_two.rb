@@ -1,5 +1,5 @@
 
-class CreateModelTwo < ActiveRecord::Migration
+class CreateModelTwo < ActiveRecord::Migration[5.0]
   def self.up
     create_table :test_two_models do |t|
       t.string  :title

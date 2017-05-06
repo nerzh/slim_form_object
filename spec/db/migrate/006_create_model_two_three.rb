@@ -1,5 +1,5 @@
 
-class CreateModelTwoThree < ActiveRecord::Migration
+class CreateModelTwoThree < ActiveRecord::Migration[5.0]
   def self.up
     create_table :test_three_model_test_two_models do |t|
       t.integer :test_three_model_id
