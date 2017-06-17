@@ -24,9 +24,8 @@ module SlimFormObject
       #delegate attributes of models
       models.each do |model|
         model.column_names.each do |attr|
-          delegate attr.to_sym, "#{attr}=".to_sym,
-                   to: snake(model.to_s).to_sym,
-                   prefix: snake(model.to_s).to_sym
+          delegate attr.to_sym, "#{attr}=".to_sym, to:     snake(model.to_s).to_sym,
+                                                   prefix: true
         end
       end
     end
@@ -150,10 +149,10 @@ module SlimFormObject
   end
 
   def get_attributes_for_update(model_attributes, model)
-    update_attributes = {}
+    attributes_for_update = {}
     hash_attributes   = params.slice(*model_attributes)
-    hash_attributes.each{ |attr, val| update_attributes[attr.gsub(/#{snake(model.to_s)}_(.*)/, '\1')] = val }
-    update_attributes
+    hash_attributes.each{ |attr, val| attributes_for_update[attr.gsub(/#{snake(model.to_s)}_(.*)/, '\1')] = val }
+    attributes_for_update
   end
 
   def get_association(class1, class2)
