@@ -16,8 +16,9 @@ module SlimFormObject
     def apply_parameters
       filter_not_save_objects
       update_attributes_single_models
-      update_attributes_for_collection
       update_attributes_for_multiple_models
+
+      update_attributes_for_collection
 
       result_array_updated_objects
     end
@@ -33,8 +34,10 @@ module SlimFormObject
     def update_attributes_single_models
       array_all_objects_for_save.each do |object|
         object.assign_attributes( hash_attributes_from_params_for_update(object) )
-        @result_array_updated_objects << object
+        result_array_updated_objects << object
       end
+
+      form_object.array_objects_for_save = result_array_updated_objects
     end
 
     def hash_attributes_from_params_for_update(object)
@@ -46,15 +49,36 @@ module SlimFormObject
     end
 
 
+    # MULTIPLE OBJECTS
+
+    def update_attributes_for_multiple_models
+      params.keys.each do |key|
+        if params[key].class == Array and params[key].first.class == ActionController::Parameters
+          params[key].each do |parameters|
+            object = get_class_of_snake_model_name(key).new
+            object.assign_attributes(JSON.parse(parameters.to_json))
+            result_array_updated_objects << object
+          end
+        end
+      end
+
+      form_object.array_objects_for_save = result_array_updated_objects
+    end
+
+
     # OBJECTS HAS COLLECTION
 
     def update_attributes_for_collection
       array_all_objects_for_save.each do |object|
         assign_attributes_for_collection(object)
       end
+
+      form_object.array_objects_for_save = result_array_updated_objects
     end
 
     def assign_attributes_for_collection(object)
+      form_object.array_objects_for_save = result_array_updated_objects
+
       real_name_keys_of_collections.each do |method_name|
         if object.respond_to?(method_name)
           old_attribute = object.method( method_name ).call
@@ -88,21 +112,6 @@ module SlimFormObject
         end
       end
       form_object.errors.messages.present?
-    end
-
-
-    # MULTIPLE OBJECTS
-
-    def update_attributes_for_multiple_models
-      params.keys.each do |key|
-        if params[key].class == Array and params[key].first.class == ActionController::Parameters
-          params[key].each do |parameters|
-            object = get_class_of_snake_model_name(key).new
-            object.assign_attributes(JSON.parse(parameters.to_json))
-            @result_array_updated_objects << object
-          end
-        end
-      end
     end
 
   end
