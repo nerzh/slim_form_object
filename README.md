@@ -83,7 +83,7 @@ class ReviewForm < SlimFormObject::Base
       
   # you can to check a params here or in controller
   def parameters(params)
-    params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text, :user_address_ids => [])
+    params.require(:review_book).permit(rating: [:ratings], review_book: [:theme], review_book: [:text], user: [ address_ids: [] ] )
   end
 end
 ```
@@ -108,7 +108,7 @@ class ReviewController < ApplicationController
   private
     
   def params_review
-    params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text, :user_address_ids => [])
+    params.require(:review_book).permit(rating: [:ratings], review_book: [:theme], review_book: [:text], user: [ address_ids: [] ] )
   end
 end
 ```
