@@ -3,7 +3,7 @@ test:
   encoding: unicode
   host: localhost
   port: 5432
-  database: test_sof
+  database: test_sfo
   pool: 5
   username: rails_app
   password: password1

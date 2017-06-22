@@ -56,16 +56,6 @@ module SlimFormObject
       self.params = params
       get_or_add_default_objects
     end
-
-    def get_or_add_default_objects
-      array_of_all_models.map do |model|
-        if get_self_object(model) == nil
-          method( "#{snake(model.to_s)}=" ).call(model.new)
-        else
-          get_self_object(model)
-        end
-      end
-    end
     # INIT END
 
 
@@ -93,6 +83,16 @@ module SlimFormObject
     def apply
       assign                 = Assign.new(self)
       @hash_objects_for_save = assign.apply_parameters
+    end
+
+    def get_or_add_default_objects
+      array_of_all_models.map do |model|
+        if get_self_object(model) == nil
+          method( "#{snake(model.to_s)}=" ).call(model.new)
+        else
+          get_self_object(model)
+        end
+      end
     end
     
     def check_array_settings_with_settings

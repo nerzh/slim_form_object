@@ -1,17 +1,17 @@
 require 'spec_helper'
 require 'helpers/models'
 
-class TestModule
-  include ActiveModel::Model
-  include SlimFormObject
+class TestModule < SlimFormObject::Base
+  init_models TestOneModel, TestTwoModel, TestThreeModel, TestFourModel
 end
 
-describe TestModule do
+describe TestModule, enviroment: :test do
 
   let!(:object) { TestModule.new }
+  let!(:saver)  { SlimFormObject::Saver.new(object) }
 
   it { expect(TestModule).to include(ActiveModel::Model) }
-  it { expect(TestModule).to include(SlimFormObject) }
+  it { expect(TestModule).to be < SlimFormObject::Base }
 
   it 'has a version number' do
     expect(SlimFormObject::VERSION).not_to be nil
@@ -19,87 +19,88 @@ describe TestModule do
 
   context 'get_association' do
     it 'model1 has_one model2' do
-      association = object.send :get_association, TestOneModel, TestTwoModel
+      association = saver.send :get_association, TestOneModel, TestTwoModel
       expect(association).to eq(:has_one)
     end
 
     it 'model2 belongs_to model1' do
-      association = object.send :get_association, TestTwoModel, TestOneModel
+      association = saver.send :get_association, TestTwoModel, TestOneModel
       expect(association).to eq(:belongs_to)
     end
 
     it 'model1 has_many model3' do
-      association = object.send :get_association, TestOneModel, TestThreeModel
+      association = saver.send :get_association, TestOneModel, TestThreeModel
       expect(association).to eq(:has_many)
     end
 
     it 'model3 belongs_to model1' do
-      association = object.send :get_association, TestThreeModel, TestOneModel
+      association = saver.send :get_association, TestThreeModel, TestOneModel
       expect(association).to eq(:belongs_to)
     end
 
     it 'model1 has_many :test_four_models, through: :test_one_four_models' do
-      association = object.send :get_association, TestOneModel, TestFourModel
+      association = saver.send :get_association, TestOneModel, TestFourModel
       expect(association).to eq(:has_many)
     end
 
     it 'model2 has_and_belongs_to_many model3' do
-      association = object.send :get_association, TestTwoModel, TestThreeModel
+      association = saver.send :get_association, TestTwoModel, TestThreeModel
       expect(association).to eq(:has_and_belongs_to_many)
     end
 
     it 'model3 has_and_belongs_to_many model2' do
-      association = object.send :get_association, TestThreeModel, TestTwoModel
+      association = saver.send :get_association, TestThreeModel, TestTwoModel
       expect(association).to eq(:has_and_belongs_to_many)
     end
 
     it 'model3 has_and_belongs_to_many model2' do
-      association = object.send :get_association, TestThreeModel, TestTwoModel
+      association = saver.send :get_association, TestThreeModel, TestTwoModel
       expect(association).to eq(:has_and_belongs_to_many)
     end
 
     it 'model4 has_many :test_one_models, through: :test_one_four_models' do
-      association = object.send :get_association, TestFourModel, TestOneModel
+      association = saver.send :get_association, TestFourModel, TestOneModel
       expect(association).to eq(:has_many)
     end
 
     it 'model1-4 belongs_to model1' do
-      association = object.send :get_association, TestOneFourModel, TestOneModel
+      association = saver.send :get_association, TestOneFourModel, TestOneModel
       expect(association).to eq(:belongs_to)
     end
 
     it 'model1-4 belongs_to model4' do
-      association = object.send :get_association, TestOneFourModel, TestFourModel
+      association = saver.send :get_association, TestOneFourModel, TestFourModel
       expect(association).to eq(:belongs_to)
     end
 
     it 'model1 has_many model1-4' do
-      association = object.send :get_association, TestOneModel, TestOneFourModel
+      association = saver.send :get_association, TestOneModel, TestOneFourModel
       expect(association).to eq(:has_many)
     end
 
     it 'model4 has_many model1-4' do
-      association = object.send :get_association, TestFourModel, TestOneFourModel
+      association = saver.send :get_association, TestFourModel, TestOneFourModel
       expect(association).to eq(:has_many)
     end
 
     it 'model2 don\'t have model4' do
-      association = object.send :get_association, TestTwoModel, TestFourModel
+      association = saver.send :get_association, TestTwoModel, TestFourModel
       expect(association).to eq(nil)
     end
 
   end
 
   context 'init_models' do
-    it 'init variable @models' do
-      object.class.stub(:add_attributes).and_return(true)
-      object.class.init_models(TestOneModel, TestTwoModel)
+    class Test < SlimFormObject::Base; end
+    Test.init_models(TestOneModel, TestTwoModel)
+    object = Test.new
 
-      expect( object.array_of_models ).to eq([TestOneModel, TestTwoModel])
+    it 'init variable @models' do
+      expect( object.array_of_all_models ).to eq([TestOneModel, TestTwoModel])
     end
 
     it 'must be called add_attributes' do
-      expect(object.class).to receive(:add_attributes).and_return(true)
+      expect(object.class).to receive(:define_array_of_models).and_return(true)
       object.class.init_models(TestOneModel, TestTwoModel)
     end
   end
@@ -113,8 +114,12 @@ describe TestModule do
   end
 
   context 'add_attributes' do
+    class Test2 < SlimFormObject::Base; end
+    Test2.init_models()
+    object = Test2.new
+
     it 'attributes do not exist' do
-      expect(object.respond_to? :params).to eq(false)
+      expect(object.respond_to? :params).to eq(true)
       expect(object.respond_to? :test_one_model_title).to eq(false)
       expect(object.respond_to? :test_two_model_title).to eq(false)
       expect(object.respond_to? :test_three_model_title).to eq(false)
@@ -122,7 +127,7 @@ describe TestModule do
     end
 
     it 'attributes exist' do
-      object.class.add_attributes([TestOneModel, TestTwoModel])
+      object.class.init_models(TestOneModel, TestTwoModel)
 
       expect(object.respond_to? :params).to eq(true)
       expect(object.respond_to? :test_one_model_title).to eq(true)
@@ -136,13 +141,14 @@ describe TestModule do
   context 'set_errors' do
     before :each do
       @test_object = TestModule.new
+      @validator   = SlimFormObject::Validator.new(@test_object)
     end
     
     it 'errors is present' do
       error = {title: "can't be blank"}
-      @test_object.send :set_errors, error
+      @validator.send :set_errors, 'object_name', error
 
-      expect( @test_object.errors.messages ).to eq( {title: ["can't be blank"]} )
+      expect( @test_object.errors.messages ).to eq( {object_name: [{title: "can't be blank"}]} )
     end
 
     it 'errors is not exist' do
@@ -150,129 +156,35 @@ describe TestModule do
     end
   end
 
-  context 'validation_models' do
-    before do
-      object.instance_eval{ @array_of_models = [TestOneModel] }
-    end
-
-    it 'errors is present' do
-      object.stub(:test_one_model).and_return( TestOneModel.new(descr: 'desc') )
-      expect(object).to receive(:set_errors).and_return( true )
-      object.send :validation_models
-    end
-
-    it 'errors is not exist' do
-      object.stub(:test_one_model).and_return( TestOneModel.new(title: 'title', descr: 'desc') )
-      expect(object).not_to receive(:set_errors)
-      object.send :validation_models
-    end
-  end
-
   context 'update_attributes' do
-    it 'must call this methods' do
-      attributes_of_model = ["test_one_model_id", "test_one_model_title", "test_one_model_descr"]
-      attributes_for_update = {"title"=>"Test Title", "descr"=>"Test Descr"}
-
-      object.instance_eval{ @array_of_models = [TestOneModel] }
-      expect(object).to receive(:make_attributes_of_model).and_return( attributes_of_model )
-      expect(object).to receive(:get_attributes_for_update).and_return( attributes_for_update )
-      object.stub(:test_one_model).and_return( TestOneModel.new )
-      object.send :update_attributes
-    end
+    # it 'must call this methods' do
+    #   attributes_of_model = ["test_one_model_id", "test_one_model_title", "test_one_model_descr"]
+    #   attributes_for_update = {"title"=>"Test Title", "descr"=>"Test Descr"}
+    #
+    #   object.instance_eval{ @array_of_models = [TestOneModel] }
+    #   expect(object).to receive(:make_attributes_of_model).and_return( attributes_of_model )
+    #   expect(object).to receive(:get_attributes_for_update).and_return( attributes_for_update )
+    #   object.stub(:test_one_model).and_return( TestOneModel.new )
+    #   object.send :update_attributes
+    # end
   end
 
   context 'get_attributes_for_update' do
-    it 'make attributes for update model' do
-      object.stub(:params).and_return( {'test_one_model_title'=>'Test Title', 'test_one_model_descr'=>'Test Descr'} )
-      model_attributes = ["test_one_model_id", "test_one_model_title", "test_one_model_descr"]
-      update_attributes = object.send :get_attributes_for_update, model_attributes, TestOneModel
-
-      expect(update_attributes).to eq( {"title"=>"Test Title", "descr"=>"Test Descr"} )
-    end
+    # it 'make attributes for update model' do
+    #   object.stub(:params).and_return( {'test_one_model_title'=>'Test Title', 'test_one_model_descr'=>'Test Descr'} )
+    #   model_attributes = ["test_one_model_id", "test_one_model_title", "test_one_model_descr"]
+    #   update_attributes = object.send :get_attributes_for_update, model_attributes, TestOneModel
+    #
+    #   expect(update_attributes).to eq( {"title"=>"Test Title", "descr"=>"Test Descr"} )
+    # end
   end
 
   context 'make_attributes_of_model' do
-    it 'make attributes of model' do
-      update_attributes = object.send :make_attributes_of_model, TestOneModel
-
-      expect(update_attributes).to eq( ["test_one_model_id", "test_one_model_title", "test_one_model_descr"] )
-    end
-  end
-
-  context 'assign_attributes_for_collection' do
-    before :each do
-      @test_object = TestOneModel.create(title:'title', descr:'descr')
-      (1...4).each { TestFourModel.create(title:'title', descr:'descr') }
-    end
-
-    it 'assign attributes for test_one_model' do
-      object.stub(:params).and_return( {test_one_model_test_four_model_ids: [1, 2, 3]} )
-      object.stub_chain(:method, :call) { @test_object }
-      object.stub(:keys_of_collections).and_return( ['test_four_model_ids'] )
-      object.send(:assign_attributes_for_collection, TestOneModel)
-
-      expect(@test_object.test_four_model_ids).to eq( [1, 2, 3] )
-    end
-
-    it 'must don\'t assign attributes for test_one_model' do
-      object.stub(:params).and_return( {test_ids: [1], _ids: [1], ids_test: [1], test_one_model_test_four_model_idss: [1], test_ids_one: [1]} )
-      object.stub_chain(:method, :call) { @test_object }
-      object.stub(:keys_of_collections).and_return( [:test_ids, :_ids, :ids_test, :test_one_model_test_four_model_idss, :test_ids_one] )
-      object.send(:assign_attributes_for_collection, TestOneModel)
-
-      expect(@test_object.test_four_model_ids).to eq( [] )
-    end
-  end
-
-  context 'keys_of_collections' do
-    it 'must be return array with values' do
-      object.instance_eval{ @array_of_models = [TestOneModel] }
-      object.stub(:params).and_return( {test_one_model_test_four_model_ids: [1, 2, 3]} )
-      object.stub_chain(:method, :call) { TestOneModel.create(title:'title', descr:'descr') }
-
-      expect(object.send :keys_of_collections).to eq( ['test_four_model_ids'] )
-    end
-
-    it 'must be return array without values' do
-      object.stub(:params).and_return( {_ids: [1], ids_test: [1], test_one_model_test_four_model_idss: [1], test_ids_one: [1]} )
-
-      expect(object.send :keys_of_collections).to eq( [] )
-    end
-  end
-
-  context 'exist_any_errors_without_collections?' do
-    before :each do
-      object.instance_eval do
-        def test_one_model
-          TestOneModel.create(title:'title', descr:'descr')
-        end
-        def test_four_model
-          TestFourModel.create(title:'title', descr:'descr')
-        end
-        @array_of_models = [TestOneModel, TestFourModel]
-      end
-    end
-
-    it 'must be return true' do
-      object.stub(:keys_of_collections).and_return( ['test_one_model_ids', 'test_four_model_ids'] )
-      object.stub(:valid?).and_return( false )
-      object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error'} )
-
-      expect(object.send :exist_any_errors_without_collections?).to eq( true )
-    end
-
-    it 'must be return false' do
-      object.instance_eval do
-        def test_one_model
-          TestThreeModel.create(title:'title', descr:'')
-        end
-      end
-      object.stub(:keys_of_collections).and_return( ['test_one_model_ids', 'test_four_model_ids'] )
-      object.stub(:valid?).and_return( false )
-      object.stub_chain(:errors, :messages).and_return( {:test_one_models=>'error', :test_four_models=>'error', :descr=>'error'} )
-
-      expect(object.send :exist_any_errors_without_collections?).to eq( false )
-    end
+    # it 'make attributes of model' do
+    #   update_attributes = object.send :make_attributes_of_model, TestOneModel
+    #
+    #   expect(update_attributes).to eq( ["test_one_model_id", "test_one_model_title", "test_one_model_descr"] )
+    # end
   end
 
 end
