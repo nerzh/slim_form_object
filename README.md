@@ -77,8 +77,6 @@ class ReviewForm < SlimFormObject::Base
     self.user             = current_user
     # self.review_book      = ReviewBook.new  # empty objects will generate automatically 
     # self.rating           = Rating.new      # but you can override them
-        
-     
   end
       
   # you can to check a params here or in controller
@@ -86,9 +84,10 @@ class ReviewForm < SlimFormObject::Base
     params.require(:review_book).permit("rating"       => [:value], 
                                         "review_book"  => [:theme, :text], 
                                         "user"         => ["address_ids" => []],
-                                        "sfo-multiple" => [
-                                          "user"       => [
-                                            "address"  => [:city, :street, :created_at]
+                                        # sfo-multiple
+                                        "sfo-multiple" => [ # if you have nested objects in your web-form and you use "sfo_fields_for" form actionview-helper 
+                                          "user"       => [ # nested objects will create for this object :user
+                                            "address"  => [:city, :street, :created_at] # this is permitted params of nested object
                                           ]
                                         ])
   end
@@ -118,9 +117,10 @@ class ReviewController < ApplicationController
     params.require(:review_book).permit("rating"       => [:value], 
                                         "review_book"  => [:theme, :text], 
                                         "user"         => ["address_ids" => []],
-                                        "sfo-multiple" => [
-                                          "user"       => [
-                                            "address"  => [:city, :street, :created_at]
+                                        # sfo-multiple
+                                        "sfo-multiple" => [ # if you have nested objects in your web-form and you use "sfo_fields_for" form actionview-helper 
+                                          "user"       => [ # nested objects will create for this object :user
+                                            "address"  => [:city, :street, :created_at] # this is permitted params of nested object
                                           ]
                                         ])
   end
@@ -198,7 +198,7 @@ for example
     = n.text_field  'address-street'
     = n.date_select 'address-created_at'
 
-#   this will create two new addresses for object of model :user 
+#   this too will create two new addresses for object of model :user 
     ...
     
 ``` 
