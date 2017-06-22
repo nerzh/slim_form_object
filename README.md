@@ -76,14 +76,21 @@ class ReviewForm < SlimFormObject::Base
     # create the objects of models which will be saved
     self.user             = current_user
     # self.review_book      = ReviewBook.new  # empty objects will generate automatically 
-    # self.rating           = Rating.new      # you can override them
+    # self.rating           = Rating.new      # but you can override them
         
      
   end
       
   # you can to check a params here or in controller
-  def parameters(params)
-    params.require(:review_book).permit(rating: [:ratings], review_book: [:theme], review_book: [:text], user: [ address_ids: [] ] )
+  def params_review
+    params.require(:review_book).permit("rating"       => [:value], 
+                                        "review_book"  => [:theme, :text], 
+                                        "user"         => ["address_ids" => []],
+                                        "sfo-multiple" => [
+                                          "user"       => [
+                                            "address"  => [:city, :street, :created_at]
+                                          ]
+                                        ])
   end
 end
 ```
@@ -108,7 +115,14 @@ class ReviewController < ApplicationController
   private
     
   def params_review
-    params.require(:review_book).permit(rating: [:ratings], review_book: [:theme], review_book: [:text], user: [ address_ids: [] ] )
+    params.require(:review_book).permit("rating"       => [:value], 
+                                        "review_book"  => [:theme, :text], 
+                                        "user"         => ["address_ids" => []],
+                                        "sfo-multiple" => [
+                                          "user"       => [
+                                            "address"  => [:city, :street, :created_at]
+                                          ]
+                                        ])
   end
 end
 ```
@@ -151,7 +165,7 @@ e.g. *user* & *address_id* => **user-address_id**
 
 ## FOR NESTED OBJECTS
 
-#### Use helper sfo_fields_for
+#### Use helper "sfo_fields_for" with options: {sfo_multiple: true}
 
 for example
 ```yaml
@@ -159,33 +173,35 @@ for example
   = f.number_field 'rating-value',      placeholder: "Rating"
   = f.text_field   'review_book-theme', placeholder: "Theme"
   = f.text_field   'review_book-text',  placeholder: "Text"
-  
+
+# like this. Nested forms for object :user
   = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
-    = n.text_field 'address-city'
-    = n.text_field 'address-street'
+    = n.text_field  'address-city'
+    = n.text_field  'address-street'
     = n.date_select 'address-created_at'
     
-    = n.text_field 'address-city'
-    = n.text_field 'address-street'
+    = n.text_field  'address-city'
+    = n.text_field  'address-street'
     = n.date_select 'address-created_at'
-    
+
+#   this will create two new addresses for object of model :user    
     ...
     
     or
     
   = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
-    = n.text_field 'address-city'
-    = n.text_field 'address-street'
+    = n.text_field  'address-city'
+    = n.text_field  'address-street'
     = n.date_select 'address-created_at'
   = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
-    = n.text_field 'address-city'
-    = n.text_field 'address-street'
+    = n.text_field  'address-city'
+    = n.text_field  'address-street'
     = n.date_select 'address-created_at'
-    
+
+#   this will create two new addresses for object of model :user 
     ...
     
-```
-#### this will create two new addresses for object of model :user 
+``` 
 
 
 ## Contributing
