@@ -18,11 +18,9 @@ module SlimFormObject
         form_object.set_errors( object.errors ) unless object.valid?
       end
 
-      hash_objects_for_save[:nested_objects].keys do |snake_model_name|
-        hash_objects_for_save[:nested_objects][model_name].keys.each do |object_name|
-          hash_objects_for_save[:nested_objects][model_name][object_name].each do |object|
-            form_object.set_errors( object.errors ) unless object.valid?   
-          end
+      hash_objects_for_save[:nested_objects].keys.each do |snake_model_name|
+        hash_objects_for_save[:nested_objects][snake_model_name].each do |object|
+          form_object.set_errors( object.errors ) unless object.valid?
         end
       end
     end

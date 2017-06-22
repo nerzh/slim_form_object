@@ -17,10 +17,11 @@ module SlimFormObject
           save_main_objects
           save_nested_objects
         end
+        return true
       end
-      true
+      false
     rescue
-      p "ERROR"
+      # p "ERROR"
       false
     end
 

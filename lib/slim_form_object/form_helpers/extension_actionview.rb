@@ -79,7 +79,13 @@ module ActionView
       end
 
       def sfo_get_date_tag_name(prefix, tag_name)
-        if tag_name[sfo_date_attr_regexp]
+        if sfo_multiple_attr?(prefix)
+          tag_name[sfo_date_attr_regexp]
+          model_name = $1
+          attr_name  = $2
+          date_type  = $3
+          tag_name   = "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
+        elsif tag_name[sfo_date_attr_regexp]
           model_name = $1
           attr_name  = $2
           date_type  = $3
