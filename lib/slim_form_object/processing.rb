@@ -21,7 +21,7 @@ module SlimFormObject
 
       def not_save_this_model(*args)
         self.instance_eval do
-          define_method(:not_validate_this_models) { args }
+          define_method(:not_save_this_model) { args }
         end
       end
 
@@ -92,7 +92,7 @@ module SlimFormObject
     end
     
     def check_array_settings_with_settings
-      define_singleton_method(:not_save_this_model) { [] } unless respond_to?(:not_validate_this_model)
+      define_singleton_method(:not_save_this_model) { [] } unless respond_to?(:not_save_this_model)
       define_singleton_method(:force_save_if_all_attr_is_nil) { [] } unless respond_to?(:force_save_if_all_attr_is_nil)
     end
 
