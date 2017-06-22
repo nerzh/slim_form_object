@@ -162,11 +162,11 @@ for example
   
   = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
     = n.text_field 'address-city'
-    = n.text_field 'address_street'
+    = n.text_field 'address-street'
     = n.date_select 'address-created_at'
     
     = n.text_field 'address-city'
-    = n.text_field 'address_street'
+    = n.text_field 'address-street'
     = n.date_select 'address-created_at'
     
     ...
@@ -175,11 +175,11 @@ for example
     
   = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
     = n.text_field 'address-city'
-    = n.text_field 'address_street'
+    = n.text_field 'address-street'
     = n.date_select 'address-created_at'
   = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
     = n.text_field 'address-city'
-    = n.text_field 'address_street'
+    = n.text_field 'address-street'
     = n.date_select 'address-created_at'
     
     ...
