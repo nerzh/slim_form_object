@@ -52,15 +52,11 @@ module ActionView
       end
 
       def sfo_get_tag_name(object_name, method, multiple)
+        model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
+
         if sfo_multiple_attr?(object_name)
-          method.to_s[sfo_single_attr_regexp]
-          model_name = $1
-          attr_name  = $2
           tag_name   = "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
         elsif sfo_single_attr?(method)
-          method.to_s[sfo_single_attr_regexp]
-          model_name = $1
-          attr_name  = $2
           tag_name   = "#{object_name}[#{model_name}][#{attr_name}]#{"[]" if multiple}"
         end
 
@@ -69,30 +65,40 @@ module ActionView
 
       def sfo_get_method_name(method)
         if sfo_single_attr?(method)
-          method.to_s[sfo_single_attr_regexp]
-          model_name = $1
-          attr_name  = $2
-          method     = "#{model_name}_#{attr_name}"
+          model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
+          method = "#{model_name}_#{attr_name}"
         end
 
         method
       end
 
       def sfo_get_date_tag_name(prefix, tag_name)
+        model_name, attr_name, date_type = apply_expression_date(tag_name, sfo_date_attr_regexp)
+
         if sfo_multiple_attr?(prefix)
-          tag_name[sfo_date_attr_regexp]
-          model_name = $1
-          attr_name  = $2
-          date_type  = $3
           tag_name   = "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
-        elsif tag_name[sfo_date_attr_regexp]
-          model_name = $1
-          attr_name  = $2
-          date_type  = $3
+        else
           tag_name   = "#{prefix}[#{model_name}][#{attr_name}#{date_type}]"
         end
 
         tag_name
+      end
+
+      def apply_expression_date(string, exp)
+        string[exp]
+        model_name = $1
+        attr_name  = $2
+        date_type  = $3
+
+        [model_name, attr_name, date_type]
+      end
+
+      def apply_expression_text(string, exp)
+        string[exp]
+        model_name = $1
+        attr_name  = $2
+
+        [model_name, attr_name]
       end
     end
 

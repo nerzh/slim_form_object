@@ -9,7 +9,6 @@ module SlimFormObject
     attr_accessor :params, :array_objects_for_save, :hash_objects_for_save
 
     class << self
-
       def set_model_name(name)
         define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
       end
@@ -85,7 +84,11 @@ module SlimFormObject
       Validator.new(self).validate_form_object
     end
 
-    # POMOGAY
+    def array_all_objects_for_save
+      array_objects_for_save ||= get_or_add_default_objects
+    end
+
+    private
 
     def apply
       assign                 = Assign.new(self)
@@ -95,16 +98,6 @@ module SlimFormObject
     def check_array_settings_with_settings
       define_singleton_method(:not_save_this_model) { [] } unless respond_to?(:not_save_this_model)
       define_singleton_method(:force_save_if_all_attr_is_nil) { [] } unless respond_to?(:force_save_if_all_attr_is_nil)
-    end
-
-    def set_errors(object_errors)
-      object_errors.each do |attribute, message|
-        errors.add(attribute, message)
-      end
-    end
-
-    def array_all_objects_for_save
-      array_objects_for_save ||= get_or_add_default_objects
     end
 
   end

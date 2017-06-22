@@ -5,10 +5,10 @@ module SlimFormObject
     attr_reader :form_object, :params, :validator, :hash_objects_for_save
 
     def initialize(form_object)
-      @form_object            = form_object
-      @params                 = form_object.params
-      @hash_objects_for_save  = form_object.hash_objects_for_save
-      @validator              = Validator.new(form_object)
+      @form_object           = form_object
+      @params                = form_object.params
+      @hash_objects_for_save = form_object.hash_objects_for_save
+      @validator             = Validator.new(form_object)
     end
 
     def save
@@ -19,11 +19,13 @@ module SlimFormObject
         end
         return true
       end
+
       false
     rescue
-      # p "ERROR"
       false
     end
+
+    private
 
     def save_main_objects
       objects = Array.new(hash_objects_for_save[:objects])

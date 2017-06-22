@@ -5,11 +5,11 @@ module SlimFormObject
     attr_reader :form_object, :params, :array_all_objects_for_save, :not_save_this_model, :result_hash_updated_objects
 
     def initialize(form_object)
-      @form_object                  = form_object
-      @params                       = form_object.params
-      @array_all_objects_for_save   = form_object.array_all_objects_for_save
-      @not_save_this_model          = form_object.not_save_this_model
-      @result_hash_updated_objects  = {objects: [], nested_objects: {}}
+      @form_object                 = form_object
+      @params                      = form_object.params
+      @array_all_objects_for_save  = form_object.array_all_objects_for_save
+      @not_save_this_model         = form_object.not_save_this_model
+      @result_hash_updated_objects = {objects: [], nested_objects: {}}
     end
 
     def apply_parameters
@@ -19,6 +19,8 @@ module SlimFormObject
 
       result_hash_updated_objects
     end
+
+    private
 
     def filter_not_save_objects
       array_all_objects_for_save.reject do |object|
@@ -35,7 +37,6 @@ module SlimFormObject
 
       result_hash_updated_objects[:objects] = array_all_objects_for_save
     end
-
 
     def hash_params_of_object(object)
       if force_permit(params[snake(object.class.to_s)])
@@ -76,7 +77,6 @@ module SlimFormObject
         end
       end
     end
-
   end
 end
 
