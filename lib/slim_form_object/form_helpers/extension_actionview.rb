@@ -1,6 +1,20 @@
 module ActionView
   module Helpers
     module HelperMethods
+      def sfo_fields_for(name, object = nil, form_options: {}, options: {}, &block)
+        object = get_class_of_snake_model_name(name.to_s).new unless object
+
+        if options[:sfo_form]
+          form_object_class = get_class_of_snake_model_name(name.to_s)
+          name = "slim_form_object_#{name}"
+          object = form_object_class.new(form_options)
+        end
+
+        fields_for(name, object, options, &block)
+      end
+
+      private
+
       def get_class_of_snake_model_name(snake_model_name)
         Object.const_get( snake_model_name.split('_').map(&:capitalize).join )
       end
@@ -10,14 +24,14 @@ module ActionView
       end
 
       def sfo_multiple_attr_regexp
-        /^multiple-([^-]+)-([^-]+)$/
+        /sfo-multiple/
       end
 
       def sfo_date_attr_regexp
         /^([^-]+)-([^-]+)(\([\s\S]+\))$/
       end
 
-      def sfo_attribute?(object)
+      def sfo_form_attribute?(object)
         object.class.ancestors[1] == SlimFormObject::Base if object
       end
 
@@ -29,34 +43,33 @@ module ActionView
         method.to_s[sfo_single_attr_regexp] ? true : false
       end
 
-      def sfo_multiple_attr?(method)
-        method.to_s[sfo_multiple_attr_regexp] ? true : false
+      def sfo_multiple_attr?(string)
+        string.to_s[sfo_multiple_attr_regexp] ? true : false
       end
 
       def sfo_date_attr?(tag_name)
         tag_name.to_s[sfo_date_attr_regexp] ? true : false
       end
 
-      def sfo_get_tag_name(object_name, method)
-        if method.to_s[sfo_single_attr_regexp]
+      def sfo_get_tag_name(object_name, method, multiple)
+        if sfo_multiple_attr?(object_name)
+          method.to_s[sfo_single_attr_regexp]
           model_name = $1
           attr_name  = $2
-          tag_name   = "#{object_name}[#{model_name}][#{attr_name}]"
-        elsif method.to_s[sfo_multiple_attr_regexp]
+          tag_name   = "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
+        elsif sfo_single_attr?(method)
+          method.to_s[sfo_single_attr_regexp]
           model_name = $1
           attr_name  = $2
-          tag_name   = "#{object_name}[sfo-multiple][#{model_name}][][#{attr_name}]"
+          tag_name   = "#{object_name}[#{model_name}][#{attr_name}]#{"[]" if multiple}"
         end
 
         tag_name
       end
 
       def sfo_get_method_name(method)
-        if method.to_s[sfo_single_attr_regexp]
-          model_name = $1
-          attr_name  = $2
-          method     = "#{model_name}_#{attr_name}"
-        elsif method.to_s[sfo_multiple_attr_regexp]
+        if sfo_single_attr?(method)
+          method.to_s[sfo_single_attr_regexp]
           model_name = $1
           attr_name  = $2
           method     = "#{model_name}_#{attr_name}"
@@ -97,25 +110,6 @@ module ActionView
     end
 
     module Tags
-
-      # class DateSelect
-      #   def datetime_selector(options, html_options)
-      #     datetime = options.fetch(:selected) { value(object) || default_datetime(options) }
-      #     @auto_index ||= nil
-      #
-      #     options = options.dup
-      #     # byebug
-      #     options[:field_name]           = @method_name
-      #     options[:include_position]     = true
-      #     options[:prefix]             ||= @object_name
-      #     options[:index]                = @auto_index if @auto_index && !options.has_key?(:index)
-      #
-      #     # byebug
-      #     DateTimeSelector.new(datetime, options, html_options)
-      #   end
-      # end
-
-
       class Base
         include HelperMethods
 
@@ -127,7 +121,7 @@ module ActionView
         end
 
         def tag_name(multiple = false, index = nil)
-          return sfo_get_tag_name(@object_name, sanitized_method_name) if sfo_attr?(sanitized_method_name)
+          return sfo_get_tag_name(@object_name, sanitized_method_name, multiple) if sfo_attr?(sanitized_method_name)
 
           if index
             "#{@object_name}[#{index}][#{sanitized_method_name}]#{"[]" if multiple}"
@@ -138,47 +132,23 @@ module ActionView
       end
     end
 
-
-
-
     class FormBuilder
       include HelperMethods
-    #
-      # def fields_for(record_name, record_object = nil, fields_options = {}, &block)
-      def sfo_fields_for(name, form_options: {}, options: {}, &block)
-        form_object_class = get_class_of_snake_model_name(name.to_s)
-        fields_for("slim_form_object_#{name}", form_object_class.new(form_options), options, &block)
-      end
-    #
-    #   def date_select(method, options = {}, html_options = {})
-    #     method, options = get_sfo_name_and_method(method, @object_name, options)
-    #     @template.date_select(@object_name, method, objectify_options(options), html_options)
-    #   end
-    #
-    #   def time_select(method, options = {}, html_options = {})
-    #     method, options = get_sfo_name_and_method(method, @object_name, options)
-    #     @template.time_select(@object_name, method, objectify_options(options), html_options)
-    #   end
-    #
-    #   def datetime_select(method, options = {}, html_options = {})
-    #     method, options = get_sfo_name_and_method(method, @object_name, options)
-    #     @template.datetime_select(@object_name, method, objectify_options(options), html_options)
-    #   end
     end
-    #
+
     module FormHelper
       include HelperMethods
-    #
-      # def fields_for(record_name, record_object = nil, options = {}, &block)
-      def sfo_fields_for(name, form_options: {}, options: {}, &block)
-        form_object_class = get_class_of_snake_model_name(name.to_s)
-        fields_for("slim_form_object_#{name}", form_object_class.new(form_options), options, &block)
+
+      def fields_for(record_name, record_object = nil, options = {}, &block)
+        if options[:sfo_multiple]
+          record_name[/^([\s\S]+)(\[[\s\S]+\])/]
+          part_1 = $1
+          part_2 = $2
+          record_name = "#{part_1}[sfo-multiple]#{part_2}"
+        end
+        builder = instantiate_builder(record_name, record_object, options)
+        capture(builder, &block)
       end
-    #
-    #   def text_field(object_name, method, options = {})
-    #     method, options = get_sfo_name_and_method(method, object_name, options)
-    #     Tags::TextField.new(object_name, method, self, options).render
-    #   end
     end
 
   end
