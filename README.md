@@ -62,26 +62,27 @@ end
 ## EXAMPLE CLASS of Form Object for review_controller
 /app/forms/review_form.rb
 ```ruby
-class ReviewForm
-  include SlimFormObject
+class ReviewForm < SlimFormObject::Base
 
   validate :validation_models     # if you want to save validations of your models - optional
   set_model_name('ReviewBook')    # name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
   init_models User, Rating, ReviewBook     # must be list of models you want to update
-    
+  not_save_this_model Rating # e.g. if you do not want to check and save the model Rating
+  
   def initialize(params: {}, current_user: nil)
+    # hash of http parameters must be for automatic save input attributes
+    super(params: permit_params(params))
+    
     # create the objects of models which will be saved
     self.user             = current_user
-    self.review_book      = ReviewBook.new
-    self.rating           = Rating.new
+    # self.review_book      = ReviewBook.new  # empty objects will generate automatically 
+    # self.rating           = Rating.new      # you can override them
         
-    # hash of http parameters must be for automatic save input attributes 
-    self.params           = parameters(params)
+     
   end
       
-  # you can to check a params here
+  # you can to check a params here or in controller
   def parameters(params)
-    not_validate( Rating ) # e.g. if you do not want to check the model Rating
     params.require(:review_book).permit(:rating_ratings, :review_book_theme, :review_book_text, :user_address_ids => [])
   end
 end
@@ -96,7 +97,6 @@ class ReviewController < ApplicationController
     
   def create
     reviewForm = ReviewForm.new(params: params_review, current_user: current_user)
-    reviewForm.not_validate( Rating ) # e.g. if you do not want to check the model Rating
     reviewForm.apply_parameters       # assign attributes of *params*. Will return the instance of ReviewForm with assigned attributes
     if reviewForm.save
       render json: {status: 200}
@@ -118,36 +118,75 @@ end
 !!! this naming should be to successfully save your models !!!
 
 example name of attributes: 
-name_model & name_attribute_of_your_model => name_model_name_attribute_of_your_model 
+name_model & name_attribute_of_your_model => name_model-name_attribute_of_your_model 
 
-e.g. *review_book* & *theme* => **review_book_theme** OR *rating* & *value* => **rating_value**
+e.g. *review_book* & *theme* => **review_book-theme** OR *rating* & *value* => **rating-value**
 ```yaml
 = form_for @reviewForm, url: reviews_path, method: 'POST', html: {} do |f|
-  = f.number_field :rating_value,      placeholder: "Rating"
-  = f.text_field   :review_book_theme, placeholder: "Theme"
-  = f.text_field   :review_book_text,  placeholder: "Text"
+  = f.number_field 'rating-value',      placeholder: "Rating"
+  = f.text_field   'review_book-theme', placeholder: "Theme"
+  = f.text_field   'review_book-text',  placeholder: "Text"
 ```
-## FOR COLLECTION 
+## FOR COLLECTION
 
 WITH (multiple: true) - you must to use a attribute name_model_ids in your names of attributes:
 
 *name_model* & *name_attribute_of_your_model_ids* => **name_model_name_attribute_of_your_model_ids** 
 
-e.g. *user* & *address_ids* => **user_address_ids**
+e.g. *user* & *address_ids* => **user-address_ids**
 ```yaml
-= f.collection_select(:user_address_ids, Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true})
+= f.collection_select('user-address_ids', Address.all, :id, :column_name, {selected: @settings_form.user.address_ids}, {multiple: true})
 = f.submit 'Create review'
 ```
 
 WITH (multiple: false) - you must to use a attribute name_model_id in your names of attributes:
 
-*name_model* & *name_attribute_of_your_model_id* => **name_model_name_attribute_of_your_model_id** 
+*name_model* & *name_attribute_of_your_model_id* => **name_model-name_attribute_of_your_model_id** 
 
-e.g. *user* & *address_id* => **user_address_id**
+e.g. *user* & *address_id* => **user-address_id**
 ```yaml
-= f.collection_select(:user_address_id, Address.all, :id, :column_name, {}, {})
+= f.collection_select('user-address_id', Address.all, :id, :column_name, {}, {})
 = f.submit 'Create review'
 ```
+
+## FOR NESTED OBJECTS
+
+#### Use helper sfo_fields_for
+
+for example
+```yaml
+= form_for @reviewForm, url: reviews_path, method: 'POST', html: {} do |f|
+  = f.number_field 'rating-value',      placeholder: "Rating"
+  = f.text_field   'review_book-theme', placeholder: "Theme"
+  = f.text_field   'review_book-text',  placeholder: "Text"
+  
+  = f.sfo_fields_for :user, @a, options: {sfo_multiple: true} do |n|
+    = n.text_field 'address-city'
+    = n.text_field 'address_street'
+    = n.date_select 'address-created_at'
+    
+    = n.text_field 'address-city'
+    = n.text_field 'address_street'
+    = n.date_select 'address-created_at'
+    
+    ...
+    
+    or
+    
+  = f.sfo_fields_for :user, @a, options: {sfo_multiple: true} do |n|
+    = n.text_field 'address-city'
+    = n.text_field 'address_street'
+    = n.date_select 'address-created_at'
+  = f.sfo_fields_for :user, @a, options: {sfo_multiple: true} do |n|
+    = n.text_field 'address-city'
+    = n.text_field 'address_street'
+    = n.date_select 'address-created_at'
+    
+    ...
+    
+```
+#### this will create two new addresses for object of model :user 
+
 
 ## Contributing
 

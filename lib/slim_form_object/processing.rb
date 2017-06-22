@@ -1,163 +1,117 @@
+require 'byebug'
+
 module SlimFormObject
+  class Base
+    include ActiveModel::Model
+    include ::HelperMethods
+    extend  ::HelperMethods
 
-  def self.included(base)
-    base.include ActiveModel::Model
-    base.include HelperMethods
-    base.extend  ClassMethods
-    base.extend  HelperMethods
-  end
+    attr_accessor :params, :array_objects_for_save, :hash_objects_for_save
 
-  module ClassMethods
+    class << self
 
-    def init_models(*args)
-      self.instance_eval do
-        define_method(:array_of_models) { args }
+      def set_model_name(name)
+        define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
       end
-      add_attributes(args)
-    end
 
-    def add_attributes(models)
-      #attr_accessor for models and env params
-      attr_accessor :params
-      models.each{ |model| attr_accessor snake(model.to_s).to_sym }
+      def init_single_models(*args)
+        define_array_of_models(:array_of_all_models, args)
+      end
+      alias_method :init_models, :init_single_models
 
-      #delegate attributes of models
-      models.each do |model|
-        model.column_names.each do |attr|
-          delegate attr.to_sym, "#{attr}=".to_sym,
-                   to: snake(model.to_s).to_sym,
-                   prefix: snake(model.to_s).to_sym
+      def not_save_this_model(*args)
+        self.instance_eval do
+          define_method(:not_validate_this_models) { args }
+        end
+      end
+
+      def force_save_if_all_attr_is_nil(*args)
+        self.instance_eval do
+          define_method(:force_save_if_all_attr_is_nil) { args }
+        end
+      end
+
+      def define_array_of_models(name, args)
+        self.instance_eval do
+          define_method(name) { args }
+        end
+        make_methods_for_objects_of(args)
+      end
+
+      def make_methods_for_objects_of(models)
+        models.each{ |model| attr_accessor snake(model.to_s).to_sym }
+
+        delegate_models_attributes(models)
+      end
+
+      def delegate_models_attributes(models)
+        models.each do |model|
+          model.column_names.each do |attr|
+            delegate attr.to_sym, "#{attr}=".to_sym, to: snake(model.to_s).to_sym, prefix: true
+          end
         end
       end
     end
 
-    def set_model_name(name)
-      define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
+    def initialize(params: {})
+      self.params = params
+      get_or_add_default_objects
     end
-  end
 
-  def submit
-    @array_of_models ||= array_of_models.reject do |model| 
-      array_of_models_without_validates.include?(model) if self.respond_to?(:array_of_models_without_validates)
-    end
-    update_attributes
-    update_attributes_for_collection
-    self
-  end
-
-  alias_method :apply_parameters, :submit
-
-  def save
-    if valid?
-      models = Array.new(@array_of_models)
-      while model1 = models.delete( models[0] )
-        models.each{ |model2| save_models(model1, model2) }
-      end
-      return true
-    end
-    false
-  end
-
-  def not_validate(*args)
-    define_singleton_method(:array_of_models_without_validates) { args }
-  end
-
-  private
-
-  def save_models(model1, model2)
-    self_object_of_model1 = method( snake(model1.to_s) ).call
-    self_object_of_model2 = method( snake(model2.to_s) ).call
-    association           = get_association(model1, model2)
-
-    if    association == :belongs_to or association == :has_one
-      self_object_of_model1.send( "#{snake(model2.to_s)}=", self_object_of_model2 )
-      self_object_of_model1.save!
-    elsif association == :has_many   or association == :has_and_belongs_to_many
-      self_object_of_model1.method("#{model2.table_name}").call << self_object_of_model2
-      self_object_of_model1.save!
-    end
-  end
-
-  def validation_models
-    @array_of_models.each do |model|
-      set_errors( method(snake(model.to_s)).call.errors ) unless method( snake(model.to_s) ).call.valid?
-    end
-  end
-
-  def set_errors(model_errors)
-    model_errors.each do |attribute, message|
-      errors.add(attribute, message)
-    end
-  end
-
-  def update_attributes
-    @array_of_models.each do |model|
-      model_attributes = make_attributes_of_model(model)
-      method( snake(model.to_s) ).call.assign_attributes( get_attributes_for_update(model_attributes, model) )
-    end
-  end
-
-  def update_attributes_for_collection
-    @array_of_models.each do |model|
-      assign_attributes_for_collection(model)
-    end
-  end
-
-  def keys_of_collections
-    @keys ||= []
-    params.keys.each do |key|
-      @array_of_models.each do |model|
-        self_object_of_model = method( snake(model.to_s) ).call
-        method_name          = key.to_s[/#{snake(model.to_s)}_(.*)/, 1]
-        @keys << method_name if self_object_of_model.respond_to? method_name.to_s
-      end if key[/^.+_ids$/]
-    end if @keys.empty?
-    @keys
-  end
-
-  def exist_any_errors_without_collections?
-    keys_of_collections.each do |method_name|
-      @array_of_models.each do |model|
-        name_of_model          = method_name.to_s[/^(.+)_ids$/, 1]
-        name_of_constant_model = name_of_model.split('_').map(&:capitalize).join
-        name_of_key_error      = Object.const_get(name_of_constant_model).table_name
-        errors.messages.delete(name_of_key_error.to_sym)
-      end
-    end unless valid?
-    errors.messages.empty?
-  end
-
-  def assign_attributes_for_collection(model)
-    self_object_of_model = method( snake(model.to_s) ).call
-
-    keys_of_collections.each do |method_name|
-      if self_object_of_model.respond_to? method_name
-        old_attribute = self_object_of_model.method( method_name ).call
-        unless self_object_of_model.update_attributes( {method_name.to_s => params["#{snake(model.to_s)}_#{method_name}".to_sym]} )
-          set_errors(self_object_of_model.errors)
-          self_object_of_model.update_attributes( {method_name.to_s => old_attribute} )
-        end if exist_any_errors_without_collections?
+    def get_or_add_default_objects
+      array_of_all_models.map do |model|
+        if get_self_object(model) == nil
+          method( "#{snake(model.to_s)}=" ).call(model.new)
+        else
+          get_self_object(model)
+        end
       end
     end
-  end
+    # INIT END
 
-  def make_attributes_of_model(model)
-    model_attributes = []
-    model.column_names.each do |name|
-      model_attributes << "#{snake(model.to_s)}_#{name}"
+
+    def apply_parameters
+      check_array_settings_with_settings
+      apply      
     end
-    model_attributes
-  end
+    alias_method :submit, :apply_parameters
 
-  def get_attributes_for_update(model_attributes, model)
-    update_attributes = {}
-    hash_attributes   = params.slice(*model_attributes)
-    hash_attributes.each{ |attr, val| update_attributes[attr.gsub(/#{snake(model.to_s)}_(.*)/, '\1')] = val }
-    update_attributes
-  end
+    def save
+      Saver.new(self).save
+    end
 
-  def get_association(class1, class2)
-    class1.reflections.slice(snake(class2.to_s), class2.table_name).values.first&.macro
-  end
+    def validation_models
+      Validator.new(self).validate_form_object
+    end
 
+    # POMOGAY
+
+    def apply
+      assign                 = Assign.new(self)
+      @hash_objects_for_save = assign.apply_parameters
+    end
+    
+    def check_array_settings_with_settings
+      define_singleton_method(:not_save_this_model) { [] } unless respond_to?(:not_validate_this_model)
+      define_singleton_method(:force_save_if_all_attr_is_nil) { [] } unless respond_to?(:force_save_if_all_attr_is_nil)
+    end
+
+    def set_errors(object_errors)
+      object_errors.each do |attribute, message|
+        errors.add(attribute, message)
+      end
+    end
+
+    def array_all_objects_for_save
+      array_objects_for_save ||= get_or_add_default_objects
+    end
+
+  end
 end
+
+
+
+
+
+
+

@@ -1,3 +1,3 @@
 module SlimFormObject
-  VERSION = "0.5.23"
+  VERSION = "1.0.1"
 end
