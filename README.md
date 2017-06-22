@@ -94,7 +94,7 @@ class ReviewForm < SlimFormObject::Base
 end
 ```
 ## EXAMPLE CONTROLLER of review_controller
-/app/forms/review_controller.rb
+/app/controllers/review_controller.rb
  ```ruby
 class ReviewController < ApplicationController
   def new
