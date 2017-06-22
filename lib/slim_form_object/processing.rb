@@ -72,7 +72,8 @@ module SlimFormObject
 
     def apply_parameters
       check_array_settings_with_settings
-      apply      
+      apply
+      self
     end
     alias_method :submit, :apply_parameters
 
