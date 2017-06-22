@@ -102,7 +102,7 @@ class ReviewController < ApplicationController
   end
     
   def create
-    reviewForm = ReviewForm.new(params: params_review, current_user: current_user)
+    reviewForm = ReviewForm.new(params: params, current_user: current_user)
     reviewForm.apply_parameters       # assign attributes of *params*. Will return the instance of ReviewForm with assigned attributes
     if reviewForm.save
       render json: {status: 200}
@@ -131,7 +131,7 @@ e.g. *review_book* & *theme* => **review_book-theme** OR *rating* & *value* => *
 
 WITH (multiple: true) - you must to use a attribute name_model_ids in your names of attributes:
 
-*name_model* & *name_attribute_of_your_model_ids* => **name_model_name_attribute_of_your_model_ids** 
+*name_model* & *name_attribute_of_your_model_ids* => **name_model-name_attribute_of_your_model_ids** 
 
 e.g. *user* & *address_ids* => **user-address_ids**
 ```yaml
