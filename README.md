@@ -110,20 +110,6 @@ class ReviewController < ApplicationController
       render json: reviewForm.errors, status: 422
     end
   end
-    
-  private
-    
-  def params_review
-    params.require(:review_book).permit("rating"       => [:value], 
-                                        "review_book"  => [:theme, :text], 
-                                        "user"         => ["address_ids" => []],
-                                        # sfo-multiple
-                                        "sfo-multiple" => [ # if you have nested objects in your web-form and you use "sfo_fields_for" form actionview-helper 
-                                          "user"       => [ # nested objects will create for this object :user
-                                            "address"  => [:city, :street, :created_at] # this is permitted params of nested object
-                                          ]
-                                        ])
-  end
 end
 ```
 
