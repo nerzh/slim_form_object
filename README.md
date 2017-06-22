@@ -160,7 +160,7 @@ for example
   = f.text_field   'review_book-theme', placeholder: "Theme"
   = f.text_field   'review_book-text',  placeholder: "Text"
   
-  = f.sfo_fields_for :user, @a, options: {sfo_multiple: true} do |n|
+  = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
     = n.text_field 'address-city'
     = n.text_field 'address_street'
     = n.date_select 'address-created_at'
@@ -173,11 +173,11 @@ for example
     
     or
     
-  = f.sfo_fields_for :user, @a, options: {sfo_multiple: true} do |n|
+  = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
     = n.text_field 'address-city'
     = n.text_field 'address_street'
     = n.date_select 'address-created_at'
-  = f.sfo_fields_for :user, @a, options: {sfo_multiple: true} do |n|
+  = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
     = n.text_field 'address-city'
     = n.text_field 'address_street'
     = n.date_select 'address-created_at'
