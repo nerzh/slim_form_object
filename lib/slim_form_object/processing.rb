@@ -1,5 +1,3 @@
-require 'byebug'
-
 module SlimFormObject
   class Base
     include ActiveModel::Model
