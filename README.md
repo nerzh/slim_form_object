@@ -80,7 +80,8 @@ class ReviewForm < SlimFormObject::Base
   end
       
   # you can to check a params here or in controller
-  def params_review
+  def permit_params(params)
+    return {} if params.empty?
     params.require(:review_book).permit("rating"       => [:value], 
                                         "review_book"  => [:theme, :text], 
                                         "user"         => ["address_ids" => []],
