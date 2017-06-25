@@ -1,6 +1,4 @@
 module HelperMethods
-  private
-
   def snake(string)
     string = string.to_s
     string.gsub!(/((\w)([A-Z]))/,'\2_\3')
