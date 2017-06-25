@@ -31,6 +31,10 @@ module ActionView
         /^([^-]+)-([^-]+)(\([\s\S]+\))$/
       end
 
+      def sfo_collection_ads_regexp
+        /_ids$/
+      end
+
       def sfo_form_attribute?(object)
         object.class.ancestors[1] == SlimFormObject::Base if object
       end
@@ -51,6 +55,10 @@ module ActionView
         tag_name.to_s[sfo_date_attr_regexp] ? true : false
       end
 
+      def sfo_collection_ads_attr?(tag_name)
+        tag_name.to_s[sfo_collection_ads_regexp] ? true : false
+      end
+
       def sfo_get_tag_name(object_name, method, multiple)
         model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
 
@@ -64,7 +72,7 @@ module ActionView
       end
 
       def sfo_get_method_name(method)
-        if sfo_single_attr?(method)
+        if sfo_single_attr?(method) and !sfo_collection_ads_attr?(method)
           model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
           method = "#{model_name}_#{attr_name}"
         end
@@ -129,6 +137,7 @@ module ActionView
 
         def value(object)
           method_name = sfo_get_method_name(@method_name)
+          # byebug
           object.public_send method_name if object
         end
 

@@ -50,12 +50,19 @@ module SlimFormObject
       end
     end
 
+    def method_missing(name, *args, &block)
+      if name[/_ids$/]
+        model_name, attr_name = get_model_and_method_names(name)
+        return self.send(model_name.to_sym).send(attr_name.to_sym)
+      end
+      super(name, args, block)
+    end
+
     def initialize(params: {})
       self.params = params
       get_or_add_default_objects
     end
     # INIT END
-
 
     def apply_parameters
       check_array_settings_with_settings
