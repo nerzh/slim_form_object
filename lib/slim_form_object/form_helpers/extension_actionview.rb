@@ -137,7 +137,6 @@ module ActionView
 
         def value(object)
           method_name = sfo_get_method_name(@method_name)
-          # byebug
           object.public_send method_name if object
         end
 
