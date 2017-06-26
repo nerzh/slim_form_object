@@ -3,6 +3,7 @@ require 'helpers/models'
 
 class TestModule < SlimFormObject::Base
   init_models TestOneModel, TestTwoModel, TestThreeModel, TestFourModel
+  not_save_empty_object_for
 end
 
 describe TestModule, enviroment: :test do
