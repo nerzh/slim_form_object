@@ -67,7 +67,15 @@ class ReviewForm < SlimFormObject::Base
   validate :validation_models           # optional - if you want to save validations of your models
   set_model_name('ReviewBook')          # name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
   init_models User, Rating, ReviewBook  # must be list of models you want to update
-  not_save_this_model Rating            # optional - e.g. if you do not want to check and save the model Rating
+  not_save_empty_object_for Rating      # optional - e.g. if you do not want to validate and save the empty object Rating
+  
+  before_save_form do |form|
+                                        # code inside current activerecord transaction before save this form
+  end
+  
+  after_save_form do |form|
+                                        # code inside current activerecord transaction after save this form
+  end
   
   def initialize(params: {}, current_user: nil)
     # hash of http parameters must be for automatic save input attributes
