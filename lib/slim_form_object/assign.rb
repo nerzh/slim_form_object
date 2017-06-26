@@ -8,12 +8,12 @@ module SlimFormObject
       @form_object                 = form_object
       @params                      = form_object.params
       @array_all_objects_for_save  = form_object.array_all_objects_for_save
-      @not_save_this_model         = form_object.not_save_this_model
+      # @not_save_this_model         = form_object.not_save_this_model
       @result_hash_updated_objects = {objects: [], nested_objects: {}}
     end
 
     def apply_parameters
-      filter_not_save_objects
+      # filter_not_save_objects
       update_objects_attributes
       make_nested_objects
 
@@ -22,11 +22,11 @@ module SlimFormObject
 
     private
 
-    def filter_not_save_objects
-      array_all_objects_for_save.reject do |object|
-        not_save_this_model.include?(object.class)
-      end
-    end
+    # def filter_not_save_objects
+    #   array_all_objects_for_save.reject do |object|
+    #     not_save_this_model.include?(object.class)
+    #   end
+    # end
 
     # STANDART OBJECTS
 

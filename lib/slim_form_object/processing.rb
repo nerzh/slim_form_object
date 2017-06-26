@@ -16,15 +16,10 @@ module SlimFormObject
       end
       alias_method :init_models, :init_single_models
 
-      def not_save_this_model(*args)
+      def not_save_empty_object_for(*args)
+        args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
         self.instance_eval do
-          define_method(:not_save_this_model) { args }
-        end
-      end
-
-      def force_save_if_all_attr_is_nil(*args)
-        self.instance_eval do
-          define_method(:force_save_if_all_attr_is_nil) { args }
+          define_method(:array_models_which_not_save_if_empty) { args }
         end
       end
 
@@ -101,8 +96,7 @@ module SlimFormObject
     end
     
     def check_array_settings_with_settings
-      define_singleton_method(:not_save_this_model) { [] } unless respond_to?(:not_save_this_model)
-      define_singleton_method(:force_save_if_all_attr_is_nil) { [] } unless respond_to?(:force_save_if_all_attr_is_nil)
+      define_singleton_method(:array_models_which_not_save_if_empty) { [] } unless respond_to?(:array_models_which_not_save_if_empty)
     end
 
   end
