@@ -14,8 +14,10 @@ module SlimFormObject
     def save
       if form_object.valid?
         ActiveRecord::Base.transaction do
+          form_object.before_save_block.call(form_object)
           save_main_objects
           save_nested_objects
+          form_object.after_save_block.call(form_object)
         end
         return true
       end
@@ -43,6 +45,8 @@ module SlimFormObject
         end
       end
     end
+
+
 
     def save_objects(object_1, object_2)
       object_for_save = to_bind_models(object_1, object_2)
