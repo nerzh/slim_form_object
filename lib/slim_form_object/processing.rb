@@ -83,12 +83,12 @@ module SlimFormObject
       require_extensions
       self.params = params
       get_or_add_default_objects
+      default_settings
       self.after_initialize_block.call(self)
     end
     # END INIT
 
     def apply_parameters
-      default_settings
       apply
       self
     end
