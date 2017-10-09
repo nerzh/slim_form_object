@@ -1,5 +1,4 @@
 require "slim_form_object/version"
-require "slim_form_object/form_helpers/extension_actionview"
 require "slim_form_object/helpers"
 require "slim_form_object/validator"
 require "slim_form_object/processing"

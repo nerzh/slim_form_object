@@ -72,6 +72,7 @@ module SlimFormObject
     end
 
     def initialize(params: {})
+      require_extensions
       self.params = params
       get_or_add_default_objects
     end
@@ -97,6 +98,10 @@ module SlimFormObject
     end
 
     private
+
+    def require_extensions
+      require "slim_form_object/form_helpers/extension_actionview"
+    end
 
     def apply
       assign                 = Assign.new(self)
