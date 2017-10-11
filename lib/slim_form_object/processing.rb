@@ -45,26 +45,12 @@ module SlimFormObject
       end
 
       # CALLBACKS
-      def after_initialize_form(&block)
-        if block_given?
-          self.instance_eval do
-            define_method(:after_initialize_block) { block }
-          end
-        end
-      end
-
-      def before_save_form(&block)
-        if block_given?
-          self.instance_eval do
-            define_method(:before_save_block) { block }
-          end
-        end
-      end
-
-      def after_save_form(&block)
-        if block_given?
-          self.instance_eval do
-            define_method(:after_save_block) { block }
+      %w(after_initialize before_save after_save before_validation after_validation).each do |method_name|
+        define_singleton_method("#{method_name}_form".to_sym) do |&block|
+          if block_given?
+            self.instance_eval do
+              define_method("#{method_name}_block".to_sym) { block }
+            end
           end
         end
       end
@@ -99,7 +85,9 @@ module SlimFormObject
     end
 
     def validation_models
+      self.before_validation_block.call(self)
       Validator.new(self).validate_form_object
+      self.after_validation_block.call(self)
     end
 
     def array_all_objects_for_save
@@ -130,8 +118,10 @@ module SlimFormObject
     def default_settings
       define_singleton_method(:array_models_which_not_save_if_empty) { [] } unless respond_to?(:array_models_which_not_save_if_empty)
       define_singleton_method(:after_initialize_block) { Proc.new {} } unless respond_to?(:after_initialize_block)
-      define_singleton_method(:after_save_block) { Proc.new {} } unless respond_to?(:after_save_block)
       define_singleton_method(:before_save_block) { Proc.new {} } unless respond_to?(:before_save_block)
+      define_singleton_method(:after_save_block) { Proc.new {} } unless respond_to?(:after_save_block)
+      define_singleton_method(:before_validation) { Proc.new {} } unless respond_to?(:before_validation_block)
+      define_singleton_method(:after_validation) { Proc.new {} } unless respond_to?(:after_validation_block)
     end
 
   end
