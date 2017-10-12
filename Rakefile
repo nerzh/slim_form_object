@@ -1,10 +1,10 @@
 require "bundler/gem_tasks"
-require "rspec/core/rake_task"
+# require "rspec/core/rake_task"
 require 'yaml'
 require 'active_record'
 require_relative 'spec/helpers/connect_to_base'
 
-RSpec::Core::RakeTask.new(:spec)
+# RSpec::Core::RakeTask.new(:spec)
 
 task :default => :spec
 
