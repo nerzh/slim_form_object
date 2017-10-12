@@ -1,17 +1,6 @@
 module ActionView
   module Helpers
     module HelperMethods
-      def sfo_fields_for(name, object = nil, form_options: {}, options: {}, &block)
-        object = get_class_of_snake_model_name(name.to_s).new unless object
-
-        if options[:sfo_form]
-          form_object_class = get_class_of_snake_model_name(name.to_s)
-          name = "slim_form_object_#{name}"
-          object = form_object_class.new(form_options)
-        end
-
-        fields_for(name, object, options, &block)
-      end
 
       private
 
@@ -21,10 +10,6 @@ module ActionView
 
       def sfo_single_attr_regexp
         /^([^-]+)-([^-]+)$/
-      end
-
-      def sfo_multiple_attr_regexp
-        /sfo-multiple/
       end
 
       def sfo_date_attr_regexp
@@ -40,15 +25,11 @@ module ActionView
       end
 
       def sfo_attr?(method)
-        sfo_single_attr?(method) or sfo_multiple_attr?(method)
+        sfo_single_attr?(method)
       end
 
       def sfo_single_attr?(method)
         method.to_s[sfo_single_attr_regexp] ? true : false
-      end
-
-      def sfo_multiple_attr?(string)
-        string.to_s[sfo_multiple_attr_regexp] ? true : false
       end
 
       def sfo_date_attr?(tag_name)
@@ -59,11 +40,15 @@ module ActionView
         tag_name.to_s[sfo_collection_ads_regexp] ? true : false
       end
 
-      def sfo_get_tag_name(object_name, method, multiple)
+      def sfo_get_tag_name(object_name, method, multiple, options)
         model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
 
-        if sfo_multiple_attr?(object_name)
-          tag_name   = "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
+        if options[:sfo_nested]
+          if options[:sfo_main]
+            tag_name = "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
+          else
+            tag_name = "#{object_name}[][#{model_name}][][#{attr_name}]#{"[]" if multiple}"
+          end
         elsif sfo_single_attr?(method)
           tag_name   = "#{object_name}[#{model_name}][#{attr_name}]#{"[]" if multiple}"
         end
@@ -80,10 +65,10 @@ module ActionView
         method
       end
 
-      def sfo_get_date_tag_name(prefix, tag_name)
+      def sfo_get_date_tag_name(prefix, tag_name, options)
         model_name, attr_name, date_type = apply_expression_date(tag_name, sfo_date_attr_regexp)
 
-        if sfo_multiple_attr?(prefix)
+        if options[:sfo_nested]
           tag_name   = "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
         else
           tag_name   = "#{prefix}[#{model_name}][#{attr_name}#{date_type}]"
@@ -110,6 +95,9 @@ module ActionView
       end
     end
 
+
+    # EXTENSIONS
+
     class DateTimeSelector
       include HelperMethods
 
@@ -121,8 +109,8 @@ module ActionView
         if @options[:include_position]
           field_name += "(#{ActionView::Helpers::DateTimeSelector::POSITION[type]}i)"
         end
-
-        return sfo_get_date_tag_name(prefix, field_name) if sfo_date_attr?(field_name)
+        options = self.instance_variable_get(:@options)
+        return sfo_get_date_tag_name(prefix, field_name, options) if sfo_date_attr?(field_name)
 
         @options[:discard_type] ? prefix : "#{prefix}[#{field_name}]"
 
@@ -141,7 +129,8 @@ module ActionView
         end
 
         def tag_name(multiple = false, index = nil)
-          return sfo_get_tag_name(@object_name, sanitized_method_name, multiple) if sfo_attr?(sanitized_method_name)
+          options = self.instance_variable_get(:@options)
+          return sfo_get_tag_name(@object_name, sanitized_method_name, multiple, options) if sfo_attr?(sanitized_method_name)
 
           if index
             "#{@object_name}[#{index}][#{sanitized_method_name}]#{"[]" if multiple}"
@@ -154,21 +143,76 @@ module ActionView
 
     class FormBuilder
       include HelperMethods
+
+      def initialize(object_name, object, template, options)
+        @nested_child_index = {}
+        @object_name, @object, @template, @options = object_name, object, template, options
+        @default_options = @options ? @options.slice(:index, :namespace, :skip_default_ids, :allow_method_names_outside_object) : {}
+        @default_options.merge!( {sfo_nested: options[:sfo_nested], sfo_main: options[:sfo_main]} )
+        convert_to_legacy_options(@options)
+
+        if @object_name.to_s.match(/\[\]$/)
+          if (object ||= @template.instance_variable_get("@#{Regexp.last_match.pre_match}")) && object.respond_to?(:to_param)
+            @auto_index = object.to_param
+          else
+            raise ArgumentError, "object[] naming but object param and @object var don't exist or don't respond to to_param: #{object.inspect}"
+          end
+        end
+
+        @multipart = nil
+        @index = options[:index] || options[:child_index]
+      end
+
+      def fields_for(record_name, record_object = nil, fields_options = {}, &block)
+        (self.options[:sfo_nested] and record_object) ? record_object.merge!({sfo_main: false}) : record_object.merge!({sfo_main: true})
+        fields_options, record_object = record_object, nil if record_object.is_a?(Hash) && record_object.extractable_options?
+        fields_options[:builder] ||= options[:builder]
+        fields_options[:namespace] = options[:namespace]
+        fields_options[:parent_builder] = self
+
+        case record_name
+        when String, Symbol
+          if nested_attributes_association?(record_name)
+            return fields_for_with_nested_attributes(record_name, record_object, fields_options, block)
+          end
+        else
+          record_object = record_name.is_a?(Array) ? record_name.last : record_name
+          record_name   = model_name_from_record_or_class(record_object).param_key
+        end
+
+        object_name = @object_name
+        index = if options.has_key?(:index)
+          options[:index]
+        elsif defined?(@auto_index)
+          object_name = object_name.to_s.sub(/\[\]$/, "")
+          @auto_index
+        end
+
+        record_name = if index
+          "#{object_name}[#{index}][#{record_name}]"
+        elsif record_name.to_s.end_with?("[]")
+          record_name = record_name.to_s.sub(/(.*)\[\]$/, "[\\1][#{record_object.id}]")
+          "#{object_name}#{record_name}"
+        else
+          "#{object_name}[#{record_name}]"
+        end
+        fields_options[:child_index] = index
+
+        if fields_options[:sfo_nested]
+          record_object = object
+          record_name = record_name + '[]'
+        end
+        @template.fields_for(record_name, record_object, fields_options, &block)
+      end
     end
 
     module FormHelper
       include HelperMethods
 
-      def fields_for(record_name, record_object = nil, options = {}, &block)
-        if options[:sfo_multiple]
-          record_name[/^([\s\S]+)(\[[\s\S]+\])/]
-          part_1 = $1
-          part_2 = $2
-          record_name = "#{part_1}[sfo-multiple]#{part_2}"
-        end
-        builder = instantiate_builder(record_name, record_object, options)
-        capture(builder, &block)
-      end
+      # def fields_for(record_name, record_object = nil, options = {}, &block)
+      #   builder = instantiate_builder(record_name, record_object, options)
+      #   capture(builder, &block)
+      # end
     end
 
   end

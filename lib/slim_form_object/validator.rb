@@ -2,48 +2,32 @@ module SlimFormObject
   class Validator
     include ::HelperMethods
 
-    attr_reader   :form_object, :params, :hash_objects_for_save, :array_models_which_not_save_if_empty
+    attr_reader :form_object, :params, :array_models_which_not_save_if_empty, :base_module, :data_for_save
 
     def initialize(form_object)
       @form_object                          = form_object
+      @base_module                          = form_object.class.base_module
       @params                               = form_object.params
-      @hash_objects_for_save                = form_object.hash_objects_for_save
+      @data_for_save                        = form_object.data_for_save
       @array_models_which_not_save_if_empty = form_object.array_models_which_not_save_if_empty
     end
 
     def validate_form_object
-      filter_models
-      validation_objects
-      validation_nested_objects
+      form_object.before_validation_block.call(form_object)
+      validation_objects(data_for_save)
+      form_object.after_validation_block.call(form_object)
     end
 
-    def valid_model_for_save?(object)
-      true
+    def save_if_object_is_empty?(object)
+      !(all_attributes_is_nil?(object) and array_models_which_not_save_if_empty.include?(object.class))
     end
 
     private
 
-    def validation_objects
-      hash_objects_for_save[:objects].each do |object|
-        set_errors( snake(object.class), object.errors ) unless object.valid?
-      end
-    end
-
-    def validation_nested_objects
-      hash_objects_for_save[:nested_objects].keys.each do |snake_model_name|
-        hash_objects_for_save[:nested_objects][snake_model_name].each do |object|
-          set_errors( snake(object.class), object.errors ) unless object.valid?
-        end
-      end
-    end
-
-    def filter_models
-      filter_nil_objects
-    end
-
-    def filter_nil_objects
-      hash_objects_for_save[:objects].reject! do |object|
-        !save_if_object_is_empty?(object)
+    def validation_objects(nested_array)
+      nested_array.each do |hash|
+        set_errors( snake(hash[:essence][:object].class), hash[:essence][:object].errors ) unless hash[:essence][:object].valid?
+        validation_objects(hash[:nested])
       end
     end
 
@@ -52,10 +36,6 @@ module SlimFormObject
         return false if object.send(attr_name.to_sym) != nil
       end
       true
-    end
-
-    def save_if_object_is_empty?(object)
-      !(all_attributes_is_nil?(object) and array_models_which_not_save_if_empty.include?(object.class))
     end
 
     def set_errors(object_name, object_errors)

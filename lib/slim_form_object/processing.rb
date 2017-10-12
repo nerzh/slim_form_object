@@ -4,9 +4,11 @@ module SlimFormObject
     include ::HelperMethods
     extend  ::HelperMethods
 
-    attr_accessor :params, :array_objects_for_save, :hash_objects_for_save
+    attr_accessor :params, :array_objects_for_save, :data_for_save
 
     class << self
+      attr_accessor :base_module
+
       def set_model_name(name)
         define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
       end
@@ -45,26 +47,12 @@ module SlimFormObject
       end
 
       # CALLBACKS
-      def after_initialize_form(&block)
-        if block_given?
-          self.instance_eval do
-            define_method(:after_initialize_block) { block }
-          end
-        end
-      end
-
-      def before_save_form(&block)
-        if block_given?
-          self.instance_eval do
-            define_method(:before_save_block) { block }
-          end
-        end
-      end
-
-      def after_save_form(&block)
-        if block_given?
-          self.instance_eval do
-            define_method(:after_save_block) { block }
+      %w(after_initialize before_save after_save before_validation after_validation).each do |method_name|
+        define_singleton_method("#{method_name}_form".to_sym) do |&block|
+          if block_given?
+            self.instance_eval do
+              define_method("#{method_name}_block".to_sym) { block }
+            end
           end
         end
       end
@@ -98,8 +86,13 @@ module SlimFormObject
       Saver.new(self).save
     end
 
+    def save
+      Saver.new(self).save!
+    end
+
     def validation_models
       Validator.new(self).validate_form_object
+      # self.after_validation_block.call(self)
     end
 
     def array_all_objects_for_save
@@ -114,7 +107,8 @@ module SlimFormObject
 
     def apply
       assign                 = Assign.new(self)
-      @hash_objects_for_save = assign.apply_parameters
+      @data_for_save = assign.apply_parameters
+      @data_for_save = assign.associate_objects
     end
 
     def get_or_add_default_objects
@@ -130,8 +124,10 @@ module SlimFormObject
     def default_settings
       define_singleton_method(:array_models_which_not_save_if_empty) { [] } unless respond_to?(:array_models_which_not_save_if_empty)
       define_singleton_method(:after_initialize_block) { Proc.new {} } unless respond_to?(:after_initialize_block)
-      define_singleton_method(:after_save_block) { Proc.new {} } unless respond_to?(:after_save_block)
       define_singleton_method(:before_save_block) { Proc.new {} } unless respond_to?(:before_save_block)
+      define_singleton_method(:after_save_block) { Proc.new {} } unless respond_to?(:after_save_block)
+      define_singleton_method(:before_validation_block) { Proc.new {} } unless respond_to?(:before_validation_block)
+      define_singleton_method(:after_validation_block) { Proc.new {} } unless respond_to?(:after_validation_block)
     end
 
   end
