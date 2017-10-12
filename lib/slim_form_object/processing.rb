@@ -86,7 +86,7 @@ module SlimFormObject
       Saver.new(self).save
     end
 
-    def save
+    def save!
       Saver.new(self).save!
     end
 
