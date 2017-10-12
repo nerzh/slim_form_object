@@ -92,7 +92,6 @@ module SlimFormObject
 
     def validation_models
       Validator.new(self).validate_form_object
-      # self.after_validation_block.call(self)
     end
 
     def array_all_objects_for_save
