@@ -77,23 +77,18 @@ module SlimFormObject
     def assign_objects_attributes(model_name, hash, object_hash, result_array)
       object               = get_class_of_snake_model_name(model_name).new
       object_hash[:nested] = []
+      object_attrs         = {}
       hash.each do |key, val|
         if is_nested?(val)
           nested(key, val, object_hash[:nested])
         else
-          object.assign_attributes({"#{key}": val})
+          object_attrs.merge!({"#{key}": val})
         end
       end
+      object.assign_attributes(object_attrs)
       object_hash[:essence] = {model: model_name, object: object}
       result_array << object_hash
     end
-
-    
-    # def force_permit(params)
-    #   return nil if params.class != ActionController::Parameters
-    #   params.instance_variable_set(:@permitted, true)
-    #   params
-    # end
 
     # PARAMS FORMAT
     # { 
