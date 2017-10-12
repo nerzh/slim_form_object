@@ -12,14 +12,6 @@ module HelperMethods
     Object.const_get( pref + snake_model_name.to_s.split('_').map(&:capitalize).join )
   end
 
-  def apply_expression_text(string, exp)
-    string[exp]
-    model_name = $1
-    attr_name  = $2
-
-    [model_name, attr_name]
-  end
-
   def snake(string)
     string = string.to_s
     string.gsub!(/((\w)([A-Z]))/,'\2_\3')

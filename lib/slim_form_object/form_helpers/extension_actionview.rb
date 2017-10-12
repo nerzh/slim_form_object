@@ -1,101 +1,100 @@
-module ActionView
-  module Helpers
-    module HelperMethods
+module HelperMethods
 
-      private
+  private
 
-      def get_class_of_snake_model_name(snake_model_name)
-        Object.const_get( snake_model_name.split('_').map(&:capitalize).join )
+  def get_class_of_snake_model_name(snake_model_name)
+    Object.const_get( snake_model_name.split('_').map(&:capitalize).join )
+  end
+
+  def sfo_single_attr_regexp
+    /^([^-]+)-([^-]+)$/
+  end
+
+  def sfo_date_attr_regexp
+    /^([^-]+)-([^-]+)(\([\s\S]+\))$/
+  end
+
+  def sfo_collection_ads_regexp
+    /_ids$/
+  end
+
+  def sfo_form_attribute?(object)
+    object.class.ancestors[1] == SlimFormObject::Base if object
+  end
+
+  def sfo_attr?(method)
+    sfo_single_attr?(method)
+  end
+
+  def sfo_single_attr?(method)
+    method.to_s[sfo_single_attr_regexp] ? true : false
+  end
+
+  def sfo_date_attr?(tag_name)
+    tag_name.to_s[sfo_date_attr_regexp] ? true : false
+  end
+
+  def sfo_collection_ads_attr?(tag_name)
+    tag_name.to_s[sfo_collection_ads_regexp] ? true : false
+  end
+
+  def sfo_get_tag_name(object_name, method, multiple, options)
+    model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
+
+    if options[:sfo_nested]
+      if options[:sfo_main]
+        tag_name = "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
+      else
+        tag_name = "#{object_name}[][#{model_name}][][#{attr_name}]#{"[]" if multiple}"
       end
-
-      def sfo_single_attr_regexp
-        /^([^-]+)-([^-]+)$/
-      end
-
-      def sfo_date_attr_regexp
-        /^([^-]+)-([^-]+)(\([\s\S]+\))$/
-      end
-
-      def sfo_collection_ads_regexp
-        /_ids$/
-      end
-
-      def sfo_form_attribute?(object)
-        object.class.ancestors[1] == SlimFormObject::Base if object
-      end
-
-      def sfo_attr?(method)
-        sfo_single_attr?(method)
-      end
-
-      def sfo_single_attr?(method)
-        method.to_s[sfo_single_attr_regexp] ? true : false
-      end
-
-      def sfo_date_attr?(tag_name)
-        tag_name.to_s[sfo_date_attr_regexp] ? true : false
-      end
-
-      def sfo_collection_ads_attr?(tag_name)
-        tag_name.to_s[sfo_collection_ads_regexp] ? true : false
-      end
-
-      def sfo_get_tag_name(object_name, method, multiple, options)
-        model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
-
-        if options[:sfo_nested]
-          if options[:sfo_main]
-            tag_name = "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
-          else
-            tag_name = "#{object_name}[][#{model_name}][][#{attr_name}]#{"[]" if multiple}"
-          end
-        elsif sfo_single_attr?(method)
-          tag_name   = "#{object_name}[#{model_name}][#{attr_name}]#{"[]" if multiple}"
-        end
-
-        tag_name
-      end
-
-      def sfo_get_method_name(method)
-        if sfo_single_attr?(method) and !sfo_collection_ads_attr?(method)
-          model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
-          method = "#{model_name}_#{attr_name}"
-        end
-
-        method
-      end
-
-      def sfo_get_date_tag_name(prefix, tag_name, options)
-        model_name, attr_name, date_type = apply_expression_date(tag_name, sfo_date_attr_regexp)
-
-        if options[:sfo_nested]
-          tag_name   = "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
-        else
-          tag_name   = "#{prefix}[#{model_name}][#{attr_name}#{date_type}]"
-        end
-
-        tag_name
-      end
-
-      def apply_expression_date(string, exp)
-        string[exp]
-        model_name = $1
-        attr_name  = $2
-        date_type  = $3
-
-        [model_name, attr_name, date_type]
-      end
-
-      def apply_expression_text(string, exp)
-        string[exp]
-        model_name = $1
-        attr_name  = $2
-
-        [model_name, attr_name]
-      end
+    elsif sfo_single_attr?(method)
+      tag_name   = "#{object_name}[#{model_name}][#{attr_name}]#{"[]" if multiple}"
     end
 
+    tag_name
+  end
 
+  def sfo_get_method_name(method)
+    if sfo_single_attr?(method) and !sfo_collection_ads_attr?(method)
+      model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
+      method = "#{model_name}_#{attr_name}"
+    end
+
+    method
+  end
+
+  def sfo_get_date_tag_name(prefix, tag_name, options)
+    model_name, attr_name, date_type = apply_expression_date(tag_name, sfo_date_attr_regexp)
+
+    if options[:sfo_nested]
+      tag_name   = "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
+    else
+      tag_name   = "#{prefix}[#{model_name}][#{attr_name}#{date_type}]"
+    end
+
+    tag_name
+  end
+
+  def apply_expression_date(string, exp)
+    string[exp]
+    model_name = $1
+    attr_name  = $2
+    date_type  = $3
+
+    [model_name, attr_name, date_type]
+  end
+
+  def apply_expression_text(string, exp)
+    string[exp]
+    model_name = $1
+    attr_name  = $2
+
+    [model_name, attr_name]
+  end
+end
+
+module ActionView
+  module Helpers
     # EXTENSIONS
 
     class DateTimeSelector
