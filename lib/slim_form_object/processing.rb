@@ -4,9 +4,11 @@ module SlimFormObject
     include ::HelperMethods
     extend  ::HelperMethods
 
-    attr_accessor :params, :array_objects_for_save, :hash_objects_for_save
+    attr_accessor :params, :array_objects_for_save, :data_for_save
 
     class << self
+      attr_accessor :base_module
+
       def set_model_name(name)
         define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
       end
@@ -84,10 +86,13 @@ module SlimFormObject
       Saver.new(self).save
     end
 
+    def save
+      Saver.new(self).save!
+    end
+
     def validation_models
-      self.before_validation_block.call(self)
       Validator.new(self).validate_form_object
-      self.after_validation_block.call(self)
+      # self.after_validation_block.call(self)
     end
 
     def array_all_objects_for_save
@@ -102,7 +107,8 @@ module SlimFormObject
 
     def apply
       assign                 = Assign.new(self)
-      @hash_objects_for_save = assign.apply_parameters
+      @data_for_save = assign.apply_parameters
+      @data_for_save = assign.associate_objects
     end
 
     def get_or_add_default_objects
@@ -120,8 +126,8 @@ module SlimFormObject
       define_singleton_method(:after_initialize_block) { Proc.new {} } unless respond_to?(:after_initialize_block)
       define_singleton_method(:before_save_block) { Proc.new {} } unless respond_to?(:before_save_block)
       define_singleton_method(:after_save_block) { Proc.new {} } unless respond_to?(:after_save_block)
-      define_singleton_method(:before_validation) { Proc.new {} } unless respond_to?(:before_validation_block)
-      define_singleton_method(:after_validation) { Proc.new {} } unless respond_to?(:after_validation_block)
+      define_singleton_method(:before_validation_block) { Proc.new {} } unless respond_to?(:before_validation_block)
+      define_singleton_method(:after_validation_block) { Proc.new {} } unless respond_to?(:after_validation_block)
     end
 
   end

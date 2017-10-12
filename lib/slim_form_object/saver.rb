@@ -2,12 +2,13 @@ module SlimFormObject
   class Saver
     include ::HelperMethods
 
-    attr_reader :form_object, :params, :validator, :hash_objects_for_save
+    attr_reader :form_object, :params, :validator, :base_module, :data_for_save
 
     def initialize(form_object)
       @form_object           = form_object
+      @base_module           = form_object.class.base_module
       @params                = form_object.params
-      @hash_objects_for_save = form_object.hash_objects_for_save
+      @data_for_save         = form_object.data_for_save
       @validator             = Validator.new(form_object)
     end
 
@@ -34,43 +35,22 @@ module SlimFormObject
       ActiveRecord::Base.transaction do
         form_object.before_save_block.call(form_object)
         save_main_objects
-        save_nested_objects
         form_object.after_save_block.call(form_object)
       end
     end
 
     def save_main_objects
-      objects = Array.new(hash_objects_for_save[:objects])
-      while object_1 = objects.delete( objects[0] )
-        objects.each{ |object_2| save_objects(object_1, object_2) }
+      objects = Array.new(data_for_save)
+      while object = objects.delete( objects[0] )
+        object_1 = object[:essence][:object]
+        objects.each{ |hash| save_objects(object_1, hash[:essence][:object]) }
         save_last_model_if_not_associations(object_1)
-      end
-    end
-
-    def save_nested_objects
-      hash_objects_for_save[:objects].each do |object_1|
-        next unless hash_objects_for_save[:nested_objects].include?( snake(object_1.class).to_sym )
-        hash_objects_for_save[:nested_objects][snake(object_1.class).to_sym].each do |object_2|
-          save_objects(object_1, object_2)
-        end
       end
     end
 
     def save_objects(object_1, object_2)
       object_for_save = to_bind_models(object_1, object_2)
       save_object(object_for_save)
-    end
-
-    def to_bind_models(object_1, object_2)
-      association = get_association(object_1.class, object_2.class)
-
-      if    association == :belongs_to or association == :has_one
-        object_1.send( "#{snake(object_2.class.to_s)}=", object_2 )
-      elsif association == :has_many   or association == :has_and_belongs_to_many
-        object_1.method("#{object_2.class.table_name}").call << object_2
-      end
-
-      object_1
     end
 
     def save_object(object_of_model)
@@ -81,14 +61,8 @@ module SlimFormObject
 
     def save_last_model_if_not_associations(object_1)
       association_trigger = false
-      hash_objects_for_save[:objects].each { |object_2| association_trigger = true if get_association(object_1.class, object_2.class) }
+      data_for_save.each { |hash| association_trigger = true if get_association(object_1.class, hash[:essence][:object].class) }
       object_1.save unless association_trigger
-    rescue
-      object_1.class.find(object_1.id).update!(object_1.attributes)
-    end
-
-    def get_association(class1, class2)
-      class1.reflections.slice(snake(class2.to_s), class2.table_name).values.first&.macro
     end
 
   end

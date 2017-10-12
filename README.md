@@ -66,12 +66,15 @@ class ReviewForm < SlimFormObject::Base
 
   validate :validation_models           # optional - if you want to save validations of your models
   set_model_name('ReviewBook')          # name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
+  base_module = EngineName              # optional - default nil, e.g. you using engine and your models are named EngineName::User
   init_models User, Rating, ReviewBook  # must be list of models you want to update
   not_save_empty_object_for Rating      # optional - e.g. if you do not want to validate and save the empty object Rating
   
-  after_initialize_form { |form|  # code after initialize this form }
-  before_save_form      { |form|  # code inside current activerecord transaction before save this form }
-  after_save_form       { |form|  # code inside current activerecord transaction after save this form }
+  after_initialize_form  { |form|  } # code after initialize this form 
+  before_save_form       { |form|  } # code inside current activerecord transaction before save this form 
+  after_save_form        { |form|  } # code inside current activerecord transaction after save this form 
+  before_validation_form { |form|  } # ...
+  after_validation_form  { |form|  } # ...
   
   def initialize(params: {}, current_user: nil)
     # hash of http parameters must be for automatic save input attributes
@@ -86,15 +89,15 @@ class ReviewForm < SlimFormObject::Base
   # you can to check a params here or in controller
   def permit_params(params)
     return {} if params.empty?
-    params.require(:review_book).permit("rating"       => [:value], 
-                                        "review_book"  => [:theme, :text], 
-                                        "user"         => ["address_ids" => []],
-                                        # sfo-multiple
-                                        "sfo-multiple" => [ # if you have nested objects in your web-form and you use "sfo_fields_for" form actionview-helper 
-                                          "user"       => [ # nested objects will create for this object :user
-                                            "address"  => [:city, :street, :created_at] # this is permitted params of nested object
-                                          ]
-                                        ])
+    params.require(:review_book).permit("rating"        => [:value], 
+                                        
+                                        "review_book"   => [:theme, :text], 
+                                        
+                                        "user"          => [
+                                          "address_ids" => [],
+                                          "address"     => [:city, :street, :created_at] # this is permitted params of nested object
+                                        ]
+                                        )
   end
 end
 ```
@@ -156,7 +159,7 @@ e.g. *user* & *address_id* => **user-address_id**
 
 ## FOR NESTED OBJECTS
 
-#### Use helper "sfo_fields_for" with options: {sfo_multiple: true}
+#### Use helper "fields_for" with options: {sfo_nested: true}
 
 for example
 ```yaml
@@ -166,7 +169,7 @@ for example
   = f.text_field   'review_book-text',  placeholder: "Text"
 
 # like this. Nested forms for object :user
-  = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
+  = f.fields_for :user, {sfo_nested: true} do |n|
     = n.text_field  'address-city'
     = n.text_field  'address-street'
     = n.date_select 'address-created_at'
@@ -180,11 +183,11 @@ for example
     
     or
     
-  = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
+  = f.fields_for :user, {sfo_nested: true} do |n|
     = n.text_field  'address-city'
     = n.text_field  'address-street'
     = n.date_select 'address-created_at'
-  = f.sfo_fields_for :user, @reviewForm, options: {sfo_multiple: true} do |n|
+  = f.fields_for :user, {sfo_nested: true} do |n|
     = n.text_field  'address-city'
     = n.text_field  'address-street'
     = n.date_select 'address-created_at'

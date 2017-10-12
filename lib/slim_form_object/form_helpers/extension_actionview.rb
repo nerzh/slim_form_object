@@ -1,17 +1,6 @@
 module ActionView
   module Helpers
     module HelperMethods
-      def sfo_fields_for(name, object = nil, form_options: {}, options: {}, &block)
-        object = get_class_of_snake_model_name(name.to_s).new unless object
-
-        if options[:sfo_form]
-          form_object_class = get_class_of_snake_model_name(name.to_s)
-          name = "slim_form_object_#{name}"
-          object = form_object_class.new(form_options)
-        end
-        # byebug
-        fields_for(name, object, options, &block)
-      end
 
       private
 
@@ -22,10 +11,6 @@ module ActionView
       def sfo_single_attr_regexp
         /^([^-]+)-([^-]+)$/
       end
-
-      # def sfo_multiple_attr_regexp
-      #   /sfo-multiple/
-      # end
 
       def sfo_date_attr_regexp
         /^([^-]+)-([^-]+)(\([\s\S]+\))$/
@@ -40,17 +25,12 @@ module ActionView
       end
 
       def sfo_attr?(method)
-        # sfo_single_attr?(method) or sfo_multiple_attr?(method)
         sfo_single_attr?(method)
       end
 
       def sfo_single_attr?(method)
         method.to_s[sfo_single_attr_regexp] ? true : false
       end
-
-      # def sfo_multiple_attr?(string)
-      #   string.to_s[sfo_multiple_attr_regexp] ? true : false
-      # end
 
       def sfo_date_attr?(tag_name)
         tag_name.to_s[sfo_date_attr_regexp] ? true : false
@@ -88,7 +68,6 @@ module ActionView
       def sfo_get_date_tag_name(prefix, tag_name, options)
         model_name, attr_name, date_type = apply_expression_date(tag_name, sfo_date_attr_regexp)
 
-        # if sfo_multiple_attr?(prefix)
         if options[:sfo_nested]
           tag_name   = "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
         else
@@ -231,13 +210,6 @@ module ActionView
       include HelperMethods
 
       # def fields_for(record_name, record_object = nil, options = {}, &block)
-      #   # if options[:sfo_multiple]
-      #   #   record_name[/^([\s\S]+)(\[[\s\S]+\])/]
-      #   #   part_1 = $1
-      #   #   part_2 = $2
-      #   #   record_name = "#{part_1}[sfo-multiple]#{part_2}"
-      #   # end
-
       #   builder = instantiate_builder(record_name, record_object, options)
       #   capture(builder, &block)
       # end
