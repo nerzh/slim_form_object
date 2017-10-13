@@ -54,15 +54,13 @@ module SlimFormObject
     end
 
     def save_object(object_of_model)
-      if validator.valid_model_for_save?(object_of_model.class)
-        object_of_model.save!  
-      end
+      object_of_model.save!
     end
 
     def save_last_model_if_not_associations(object_1)
       association_trigger = false
-      data_for_save.each { |hash| association_trigger = true if get_association(object_1.class, hash[:essence][:object].class) }
-      object_1.save unless association_trigger
+      data_for_save.each { |hash| association_trigger = true if get_reflection(object_1.class, hash[:essence][:object].class) }
+      object_1.save! unless association_trigger
     end
 
   end

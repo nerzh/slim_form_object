@@ -21,7 +21,8 @@ module SlimFormObject
     end
 
     def associate_objects
-      associate_all_objects(all_updated_objects)
+      associate_all_nested_objects(all_updated_objects)
+      associate_all_main_objects(all_updated_objects)
 
       all_updated_objects
     end
@@ -48,24 +49,34 @@ module SlimFormObject
       end
     end
 
-    def associate_all_objects(nested_array, object=nil)
+    def associate_all_nested_objects(nested_array, object=nil)
       nested_array.each do |hash|
         to_bind_models(object, hash[:essence][:object]) if object
-        associate_all_objects(hash[:nested], hash[:essence][:object])
+        associate_all_nested_objects(hash[:nested], hash[:essence][:object])
+      end
+    end
+
+    def associate_all_main_objects(all_updated_objects)
+      objects = Array.new(all_updated_objects)
+      while object = objects.delete( objects[0] )
+        object_1 = object[:essence][:object]
+        objects.each do |hash|
+          object_2 = hash[:essence][:object]
+          next if !object_1.new_record? and !object_2.new_record?
+          to_bind_models(object_1, object_2) 
+        end
       end
     end
 
     def make_all_objects_with_attributes
-      object_hash = {}
       params.each do |main_model_name, hash|
-        assign_objects_attributes(main_model_name, hash, object_hash, @all_updated_objects)
+        assign_objects_attributes(main_model_name, hash, all_updated_objects, :main)
       end
     end
 
     def nested(model_name, nested_array, result_array)
-      object_hash = {}
       nested_array.each do |nested_object|
-        assign_objects_attributes(model_name, nested_object, object_hash, result_array)
+        assign_objects_attributes(model_name, nested_object, result_array, :nested)
       end
     end
 
@@ -74,8 +85,9 @@ module SlimFormObject
       value.select{ |e| e.class == ActionController::Parameters or e.class == Hash }.size == value.size
     end
 
-    def assign_objects_attributes(model_name, hash, object_hash, result_array)
-      object               = get_class_of_snake_model_name(model_name).new
+    def assign_objects_attributes(model_name, hash, result_array, type)
+      object_hash          = {}
+      object               = type == :main ? form_object.send(model_name.to_sym) : get_class_of(model_name, base_module).new
       object_hash[:nested] = []
       object_attrs         = {}
       hash.each do |key, val|

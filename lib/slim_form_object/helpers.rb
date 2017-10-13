@@ -3,13 +3,52 @@ module HelperMethods
     method( snake(model.to_s).to_sym ).call
   end
 
-  def get_class_of_snake_model_name(snake_model_name)
-    pref = if self.base_module
-      self.base_module.to_s + '::'
-    else
-      ''
-    end
+  def get_class_of(snake_model_name, base_modulenil)
+    pref = base_module ? (base_module.to_s + '::') : ''
     Object.const_get( pref + snake_model_name.to_s.split('_').map(&:capitalize).join )
+  rescue
+    nil
+  end
+
+  def to_bind_models(object_1, object_2)
+    if object_2.new_record?
+      assignment_to_each_other(object_2, object_1)
+    else
+      assignment_to_each_other(object_1, object_2)
+    end
+
+    object_1
+  end
+
+  def assignment_to_each_other(object_1, object_2)
+    type, method_name = get_type_and_name_of_association(object_1.class, object_2.class)
+
+    if    type == :belongs_to or type == :has_one
+      object_1.send( "#{method_name.to_s}=", object_2 )
+    elsif type == :has_many   or type == :has_and_belongs_to_many
+      object_1.method(method_name).call << object_2
+    end
+  end
+
+  def get_type_and_name_of_association(class1, class2)
+    reflection  = get_reflection(class1, class2)
+    [type_association(reflection), method_name_association(reflection)]
+  end
+
+  def get_reflection(class1, class2)
+    class1.reflections.select{ |k,v| v.klass == class2 }.values.first
+  end
+
+  def type_association(reflection)
+    reflection&.macro
+  end
+
+  def method_name_association(reflection)
+    reflection&.name
+  end
+
+  def type_and_name_of_association_back_and_forth(class1, class2)
+    get_type_and_name_of_association(class1, class2) + get_type_and_name_of_association(class2, class1)
   end
 
   def snake(string)
@@ -17,24 +56,6 @@ module HelperMethods
     string.gsub!(/((\w)([A-Z]))/,'\2_\3')
     class_name_if_module(string.downcase)
   end
-
-  def to_bind_models(object_1, object_2)
-    association = get_association(object_1.class, object_2.class)
-
-    if    association == :belongs_to or association == :has_one
-      object_1.send( "#{snake(object_2.class.to_s)}=", object_2 )
-    elsif association == :has_many   or association == :has_and_belongs_to_many
-      object_1.method("#{object_2.class.table_name}").call << object_2
-    end
-
-    object_1
-  end
-
-  def get_association(class1, class2)
-    class1.reflections.slice(snake(class2.to_s), class2.table_name).values.first&.macro
-  end
-
-  private
   
   def class_name_if_module(string)
     return $1 if string =~ /^.+::(.+)$/

@@ -47,7 +47,7 @@ module SlimFormObject
       end
 
       # CALLBACKS
-      %w(after_initialize before_save after_save before_validation after_validation).each do |method_name|
+      %w(before_save after_save before_validation after_validation).each do |method_name|
         define_singleton_method("#{method_name}_form".to_sym) do |&block|
           if block_given?
             self.instance_eval do
@@ -72,7 +72,6 @@ module SlimFormObject
       self.params = params
       get_or_add_default_objects
       default_settings
-      self.after_initialize_block.call(self)
     end
     # END INIT
 
@@ -122,7 +121,6 @@ module SlimFormObject
     
     def default_settings
       define_singleton_method(:array_models_which_not_save_if_empty) { [] } unless respond_to?(:array_models_which_not_save_if_empty)
-      define_singleton_method(:after_initialize_block) { Proc.new {} } unless respond_to?(:after_initialize_block)
       define_singleton_method(:before_save_block) { Proc.new {} } unless respond_to?(:before_save_block)
       define_singleton_method(:after_save_block) { Proc.new {} } unless respond_to?(:after_save_block)
       define_singleton_method(:before_validation_block) { Proc.new {} } unless respond_to?(:before_validation_block)

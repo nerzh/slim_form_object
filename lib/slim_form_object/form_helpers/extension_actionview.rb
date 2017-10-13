@@ -39,24 +39,17 @@ module HelperMethods
   end
 
   def sfo_get_tag_name(object_name, method, multiple, options)
-    model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
-
+    model_name, attr_name = apply_expression_text(method)
     if options[:sfo_nested]
-      if options[:sfo_main]
-        tag_name = "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
-      else
-        tag_name = "#{object_name}[][#{model_name}][][#{attr_name}]#{"[]" if multiple}"
-      end
-    elsif sfo_single_attr?(method)
-      tag_name   = "#{object_name}[#{model_name}][#{attr_name}]#{"[]" if multiple}"
+      "#{object_name}[#{model_name}][][#{attr_name}]#{"[]" if multiple}"
+    else
+      "#{object_name}[#{model_name}][#{attr_name}]#{"[]" if multiple}"
     end
-
-    tag_name
   end
 
   def sfo_get_method_name(method)
     if sfo_single_attr?(method) and !sfo_collection_ads_attr?(method)
-      model_name, attr_name = apply_expression_text(method, sfo_single_attr_regexp)
+      model_name, attr_name = apply_expression_text(method)
       method = "#{model_name}_#{attr_name}"
     end
 
@@ -64,19 +57,16 @@ module HelperMethods
   end
 
   def sfo_get_date_tag_name(prefix, tag_name, options)
-    model_name, attr_name, date_type = apply_expression_date(tag_name, sfo_date_attr_regexp)
-
+    model_name, attr_name, date_type = apply_expression_date(tag_name)
     if options[:sfo_nested]
-      tag_name   = "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
+      "#{prefix}[#{model_name}][][#{attr_name}#{date_type}]"
     else
-      tag_name   = "#{prefix}[#{model_name}][#{attr_name}#{date_type}]"
+      "#{prefix}[#{model_name}][#{attr_name}#{date_type}]"
     end
-
-    tag_name
   end
 
-  def apply_expression_date(string, exp)
-    string[exp]
+  def apply_expression_date(string)
+    string[sfo_date_attr_regexp]
     model_name = $1
     attr_name  = $2
     date_type  = $3
@@ -84,8 +74,8 @@ module HelperMethods
     [model_name, attr_name, date_type]
   end
 
-  def apply_expression_text(string, exp)
-    string[exp]
+  def apply_expression_text(string)
+    string[sfo_single_attr_regexp]
     model_name = $1
     attr_name  = $2
 
@@ -123,7 +113,7 @@ module ActionView
         private
 
         def value(object)
-          method_name = sfo_get_method_name(@method_name)
+          method_name = @options[:sfo_nested] ? apply_expression_text(@method_name)[1] : sfo_get_method_name(@method_name)
           object.public_send method_name if object
         end
 
@@ -163,11 +153,11 @@ module ActionView
       end
 
       def fields_for(record_name, record_object = nil, fields_options = {}, &block)
-        (self.options[:sfo_nested] and record_object) ? record_object.merge!({sfo_main: false}) : record_object.merge!({sfo_main: true})
         fields_options, record_object = record_object, nil if record_object.is_a?(Hash) && record_object.extractable_options?
         fields_options[:builder] ||= options[:builder]
         fields_options[:namespace] = options[:namespace]
         fields_options[:parent_builder] = self
+        self.options[:sfo_nested] ? fields_options.merge!({sfo_main: false}) : fields_options.merge!({sfo_main: true})
 
         case record_name
         when String, Symbol
@@ -198,8 +188,8 @@ module ActionView
         fields_options[:child_index] = index
 
         if fields_options[:sfo_nested]
-          record_object = object
-          record_name = record_name + '[]'
+          record_object = object if !record_object
+          record_name   = record_name + '[][]' unless fields_options[:sfo_main]
         end
         @template.fields_for(record_name, record_object, fields_options, &block)
       end

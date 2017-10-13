@@ -43,7 +43,6 @@ module SlimFormObject
         form_object.errors.add(object_name, { attribute => message})
       end
     end
-
   end
 end
 
