@@ -67,10 +67,9 @@ class ReviewForm < SlimFormObject::Base
   validate :validation_models           # optional - if you want to save validations of your models
   set_model_name('ReviewBook')          # name of model for params.require(:model_name).permit(...) e.g. 'ReviewBook'
   base_module = EngineName              # optional - default nil, e.g. you using engine and your models are named EngineName::User
-  init_models User, Rating, ReviewBook  # must be list of models you want to update
+  init_models User, Rating, ReviewBook  # must be list of models you want to update, if you use engine, then EngineName::User, EngineName::Rating ...
   not_save_empty_object_for Rating      # optional - e.g. if you do not want to validate and save the empty object Rating
-  
-  after_initialize_form  { |form|  } # code after initialize this form 
+   
   before_save_form       { |form|  } # code inside current activerecord transaction before save this form 
   after_save_form        { |form|  } # code inside current activerecord transaction after save this form 
   before_validation_form { |form|  } # ...
@@ -81,9 +80,13 @@ class ReviewForm < SlimFormObject::Base
     super(params: permit_params(params))
     
     # create the objects of models which will be saved
-    self.user             = current_user
-    # self.review_book      = ReviewBook.new  # empty objects will generate automatically 
-    # self.rating           = Rating.new      # but you can override them
+    if current_user
+      self.user             = current_user
+    end
+
+    # new objects will generate automatically if you not created their
+    # self.review_book      = ReviewBook.new
+    # self.rating           = Rating.new
   end
       
   # you can to check a params here or in controller
@@ -159,7 +162,7 @@ e.g. *user* & *address_id* => **user-address_id**
 
 ## FOR NESTED OBJECTS
 
-#### Use helper "fields_for" with options: {sfo_nested: true}
+#### Use helper "fields_for" with name of model :user, object Address.new and options {sfo_nested: true}
 
 for example
 ```yaml
@@ -169,32 +172,26 @@ for example
   = f.text_field   'review_book-text',  placeholder: "Text"
 
 # like this. Nested forms for object :user
-  = f.fields_for :user, {sfo_nested: true} do |n|
-    = n.text_field  'address-city'
-    = n.text_field  'address-street'
-    = n.date_select 'address-created_at'
-    
-    = n.text_field  'address-city'
-    = n.text_field  'address-street'
-    = n.date_select 'address-created_at'
-
-#   this will create two new addresses for object of model :user    
-    ...
-    
-    or
-    
-  = f.fields_for :user, {sfo_nested: true} do |n|
-    = n.text_field  'address-city'
-    = n.text_field  'address-street'
-    = n.date_select 'address-created_at'
-  = f.fields_for :user, {sfo_nested: true} do |n|
+  
+  = f.fields_for :user, Address.new, {sfo_nested: true} do |n|
     = n.text_field  'address-city'
     = n.text_field  'address-street'
     = n.date_select 'address-created_at'
 
-#   this too will create two new addresses for object of model :user 
+    # first address
+    = n.fields_for :address, Phone.new, {sfo_nested: true} do |z|
+      = z.text_field 'phone-number'
+      = z.fields_for :phone, Model.new, {sfo_nested: true} do |y|
+        = y.text_field 'model-name'
+
+    # another one second address   
+    = n.fields_for :address, Phone.new, {sfo_nested: true} do |z|
+      = z.text_field 'phone-number'
+      = z.fields_for :phone, Model.new, {sfo_nested: true} do |y|
+        = y.text_field 'model-name'    
+
+#   this will create two new addresses and him nested objects for object of model :user
     ...
-    
 ``` 
 
 
