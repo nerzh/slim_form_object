@@ -47,13 +47,11 @@ module SlimFormObject
       end
 
       # CALLBACKS
-      %w(before_save after_save before_validation after_validation).each do |method_name|
-        define_singleton_method("#{method_name}_form".to_sym) do |&block|
-          if block_given?
-            self.instance_eval do
-              define_method("#{method_name}_block".to_sym) { block }
-            end
-          end
+      %w(allow_to_save_object allow_to_associate_objects before_save_form after_save_form before_validation_form after_validation_form).each do |method_name|
+        define_method("#{method_name}".to_sym) do |&block|
+          self.instance_eval do
+            define_method("#{method_name}_block".to_sym) { block }
+          end if block
         end
       end
       # END CALLBACKS
@@ -104,9 +102,9 @@ module SlimFormObject
     end
 
     def apply
-      assign                 = Assign.new(self)
-      @data_for_save = assign.apply_parameters
-      @data_for_save = assign.associate_objects
+      assign             = Assign.new(self)
+      self.data_for_save = assign.apply_parameters
+      self.data_for_save = assign.associate_objects
     end
 
     def get_or_add_default_objects
@@ -121,12 +119,13 @@ module SlimFormObject
     
     def default_settings
       define_singleton_method(:array_models_which_not_save_if_empty) { [] } unless respond_to?(:array_models_which_not_save_if_empty)
-      define_singleton_method(:before_save_block) { Proc.new {} } unless respond_to?(:before_save_block)
-      define_singleton_method(:after_save_block) { Proc.new {} } unless respond_to?(:after_save_block)
-      define_singleton_method(:before_validation_block) { Proc.new {} } unless respond_to?(:before_validation_block)
-      define_singleton_method(:after_validation_block) { Proc.new {} } unless respond_to?(:after_validation_block)
+      define_singleton_method(:allow_to_associate_objects_block) { Proc.new { true } } unless respond_to?(:allow_to_associate_objects_block)
+      define_singleton_method(:allow_to_save_object_block) { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
+      define_singleton_method(:before_save_form_block) { Proc.new {} } unless respond_to?(:before_save_form_block)
+      define_singleton_method(:after_save_form_block) { Proc.new {} } unless respond_to?(:after_save_form_block)
+      define_singleton_method(:before_validation_form_block) { Proc.new {} } unless respond_to?(:before_validation_form_block)
+      define_singleton_method(:after_validation_form_block) { Proc.new {} } unless respond_to?(:after_validation_form_block)
     end
-
   end
 end
 
