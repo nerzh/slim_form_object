@@ -2,7 +2,7 @@ module SlimFormObject
   class Assign
     include ::HelperMethods
 
-    attr_reader :form_object, :params, :all_updated_objects, :base_module, :validator
+    attr_reader :form_object, :params, :data_for_save, :base_module, :validator
 
     def initialize(form_object)
       @form_object                 = form_object
@@ -10,29 +10,29 @@ module SlimFormObject
       @params                      = form_object.params
       @array_all_objects_for_save  = form_object.array_all_objects_for_save
       @validator                   = Validator.new(form_object)
-      @all_updated_objects         = []
+      @data_for_save               = []
     end
 
     def apply_parameters
       make_all_objects_with_attributes
       clear_nil_objects
 
-      all_updated_objects
+      data_for_save
     end
 
     def associate_objects
-      associate_all_nested_objects(all_updated_objects)
-      associate_all_main_objects(all_updated_objects)
+      associate_all_nested_objects(data_for_save)
+      associate_all_main_objects(data_for_save)
 
-      all_updated_objects
+      data_for_save
     end
 
     private
 
     def clear_nil_objects
       arr_ids_nil_object = []
-      find_ids_nil_object(arr_ids_nil_object, all_updated_objects)
-      delete_hash_nil_objects(arr_ids_nil_object, all_updated_objects)
+      find_ids_nil_object(arr_ids_nil_object, data_for_save)
+      delete_hash_nil_objects(arr_ids_nil_object, data_for_save)
     end
 
     def delete_hash_nil_objects(ids_arr, nested_array)
@@ -51,13 +51,13 @@ module SlimFormObject
 
     def associate_all_nested_objects(nested_array, object=nil)
       nested_array.each do |hash|
-        to_bind_models(object, hash[:essence][:object]) if object
+        to_bind_models(object, hash[:essence][:object]) if object and validator.allow_to_associate_objects?(object, hash[:essence][:object])
         associate_all_nested_objects(hash[:nested], hash[:essence][:object])
       end
     end
 
-    def associate_all_main_objects(all_updated_objects)
-      objects = Array.new(all_updated_objects)
+    def associate_all_main_objects(data_for_save)
+      objects = Array.new(data_for_save)
       while object = objects.delete( objects[0] )
         object_1 = object[:essence][:object]
         objects.each do |hash|
@@ -70,7 +70,7 @@ module SlimFormObject
 
     def make_all_objects_with_attributes
       params.each do |main_model_name, hash|
-        assign_objects_attributes(main_model_name, hash, all_updated_objects, :main)
+        assign_objects_attributes(main_model_name, hash, data_for_save, :main)
       end
     end
 
@@ -123,7 +123,7 @@ module SlimFormObject
     #   }
     # }
 
-    # make_all_objects_with_attributes() EXAMPLE @all_updated_objects FORMAT
+    # make_all_objects_with_attributes() EXAMPLE @data_for_save FORMAT
     #
     # [
     #   {

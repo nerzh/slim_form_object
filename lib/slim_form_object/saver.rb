@@ -33,9 +33,10 @@ module SlimFormObject
 
     def save_all
       ActiveRecord::Base.transaction do
-        form_object.before_save_block.call(form_object)
+        form_object.before_save_form_block.call(form_object)
         save_main_objects
-        form_object.after_save_block.call(form_object)
+        save_nested_objects
+        form_object.after_save_form_block.call(form_object)
       end
     end
 
@@ -48,20 +49,27 @@ module SlimFormObject
       end
     end
 
+    def save_nested_objects
+      data_for_save.each do |main_object|
+        main_object[:nested].each do |object|
+          save_object(object[:essence][:object])
+        end
+      end
+    end
+
     def save_objects(object_1, object_2)
       object_for_save = to_bind_models(object_1, object_2)
       save_object(object_for_save)
     end
 
     def save_object(object_of_model)
-      object_of_model.save!
+      object_of_model.save! if validator.allow_to_save_object?(object_of_model)
     end
 
     def save_last_model_if_not_associations(object_1)
       association_trigger = false
       data_for_save.each { |hash| association_trigger = true if get_reflection(object_1.class, hash[:essence][:object].class) }
-      object_1.save! unless association_trigger
+      save_object(object_1) unless association_trigger
     end
-
   end
 end

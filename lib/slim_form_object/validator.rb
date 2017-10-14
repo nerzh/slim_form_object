@@ -13,13 +13,21 @@ module SlimFormObject
     end
 
     def validate_form_object
-      form_object.before_validation_block.call(form_object)
+      form_object.before_validation_form_block.call(form_object)
       validation_objects(data_for_save)
-      form_object.after_validation_block.call(form_object)
+      form_object.after_validation_form_block.call(form_object)
     end
 
     def save_if_object_is_empty?(object)
       !(all_attributes_is_nil?(object) and array_models_which_not_save_if_empty.include?(object.class))
+    end
+
+    def allow_to_save_object?(object)
+      form_object.allow_to_save_object_block.call(object)
+    end
+
+    def allow_to_associate_objects?(object_1, object_2)
+      form_object.allow_to_associate_objects_block.call(object_1, object_2)
     end
 
     private
