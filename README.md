@@ -205,17 +205,17 @@ example
 ```
 [
   {
-    essence: {model: 'user', object: WoodShop::User.new(attributes)},
+    essence: {model: 'user', object: UserObject},
     nested: [
       {
-        essence: {model: 'address_user', object: WoodShop::AddressUser.new(attributes)},
+        essence: {model: 'address_user', object: AddressUserObject},
         nested: [
           {
-            essence: {model: 'image', object: WoodShop::Image.new(attributes)},
+            essence: {model: 'image', object: ImageObject},
             nested: []
           },
           {
-            essence: {model: 'image', object: WoodShop::Image.new(attributes)},
+            essence: {model: 'image', object: ImageObject},
             nested: []
           }
         ] 
