@@ -8,7 +8,6 @@ module SlimFormObject
       @form_object                 = form_object
       @base_module                 = form_object.class.base_module
       @params                      = form_object.params
-      @array_all_objects_for_save  = form_object.array_all_objects_for_save
       @validator                   = Validator.new(form_object)
       @data_for_save               = []
     end

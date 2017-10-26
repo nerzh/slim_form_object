@@ -4,7 +4,7 @@ module SlimFormObject
     include ::HelperMethods
     extend  ::HelperMethods
 
-    attr_accessor :params, :array_objects_for_save, :data_for_save
+    attr_accessor :params, :data_for_save
 
     class << self
       attr_accessor :base_module
@@ -89,10 +89,6 @@ module SlimFormObject
 
     def validation_models
       Validator.new(self).validate_form_object
-    end
-
-    def array_all_objects_for_save
-      array_objects_for_save ||= get_or_add_default_objects
     end
 
     private
