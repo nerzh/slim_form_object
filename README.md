@@ -196,6 +196,42 @@ for example
     ...
 ``` 
 
+## IN CALLBACKS
+You have access to hash of data for save which you can use for change objects inside callbacks
+
+method data_for_save
+him output data format - Array of hashes
+example
+```
+[
+  {
+    essence: {model: 'user', object: WoodShop::User.new(attributes)},
+    nested: [
+      {
+        essence: {model: 'address_user', object: WoodShop::AddressUser.new(attributes)},
+        nested: [
+          {
+            essence: {model: 'image', object: WoodShop::Image.new(attributes)},
+            nested: []
+          },
+          {
+            essence: {model: 'image', object: WoodShop::Image.new(attributes)},
+            nested: []
+          }
+        ] 
+      }
+    ]
+  }
+]
+```
+### Usage
+e.g.
+```
+before_validation_form do |form|
+  form.data_for_save
+  ... do something 
+end
+```
 
 ## Contributing
 
