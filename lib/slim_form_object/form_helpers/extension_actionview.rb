@@ -111,10 +111,26 @@ module ActionView
         include HelperMethods
 
         private
-
-        def value(object)
-          method_name = @options[:sfo_nested] ? apply_expression_text(@method_name)[1] : sfo_get_method_name(@method_name)
-          object.public_send method_name if object
+        
+        # TODO: Find a better way to solve this issue!
+        # This patch is needed since this Rails commit:
+        # https://github.com/rails/rails/commit/c1a118a
+        if defined? ::ActiveRecord
+          if ::ActiveRecord::VERSION::STRING < '5.2'
+            def value(object)
+              method_name = @options[:sfo_nested] ? apply_expression_text(@method_name)[1] : sfo_get_method_name(@method_name)
+              object.send method_name if object # use send instead of public_send
+            end
+          else # rails/rails#29791
+            def value
+              method_name = @options[:sfo_nested] ? apply_expression_text(@method_name)[1] : sfo_get_method_name(@method_name)
+              if @allow_method_names_outside_object
+                object.send method_name if object && object.respond_to?(@method_name, true)
+              else
+                object.send method_name if object
+              end
+            end
+          end
         end
 
         def tag_name(multiple = false, index = nil)
