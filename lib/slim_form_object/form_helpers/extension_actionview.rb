@@ -154,6 +154,9 @@ module ActionView
         @object_name, @object, @template, @options = object_name, object, template, options
         @default_options = @options ? @options.slice(:index, :namespace, :skip_default_ids, :allow_method_names_outside_object) : {}
         @default_options.merge!( {sfo_nested: options[:sfo_nested], sfo_main: options[:sfo_main]} )
+        if ::ActionView::VERSION::STRING > '5.2'
+          @default_html_options = @default_options.except(:skip_default_ids, :allow_method_names_outside_object)
+        end
         convert_to_legacy_options(@options)
 
         if @object_name.to_s.match(/\[\]$/)
