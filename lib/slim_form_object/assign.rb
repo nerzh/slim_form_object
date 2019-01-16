@@ -2,148 +2,155 @@ module SlimFormObject
   class Assign
     include ::HelperMethods
 
-    attr_reader :form_object, :params, :data_for_save, :base_module, :validator
+    attr_reader :form_object, :params, :data_for_assign, :data_with_attributes, :base_module, :validator
 
     def initialize(form_object)
       @form_object                 = form_object
       @base_module                 = form_object.class.base_module
       @params                      = form_object.params
+      @structure                   = form_object.data_structure
       @validator                   = Validator.new(form_object)
-      @data_for_save               = []
+      @data_for_assign             = []
+      @data_with_attributes        = []
     end
 
     def apply_parameters
-      make_all_objects_with_attributes
-      clear_nil_objects
+      make_data_for_assign
+      make_data_with_attributes
+      delete_empty_objects(data_with_attributes)
 
-      data_for_save
+      data_with_attributes
     end
 
     def associate_objects
-      associate_all_nested_objects(data_for_save)
-      associate_all_main_objects(data_for_save)
-
-      data_for_save
+      associate_all_objects(data_with_attributes)
+      
+      data_with_attributes
     end
+
 
     private
 
-    def clear_nil_objects
-      arr_ids_nil_object = []
-      find_ids_nil_object(arr_ids_nil_object, data_for_save)
-      delete_hash_nil_objects(arr_ids_nil_object, data_for_save)
-    end
-
-    def delete_hash_nil_objects(ids_arr, nested_array)
-      nested_array.select!{|e| !ids_arr.include?(e.object_id)}
-      nested_array.each do |hash|
-        delete_hash_nil_objects(ids_arr, hash[:nested])
-      end
-    end
-
-    def find_ids_nil_object(ids_arr, nested_array)
-      nested_array.each do |hash|
-        ids_arr << hash.object_id if !validator.save_if_object_is_empty?(hash[:essence][:object])
-        find_ids_nil_object(ids_arr, hash[:nested])
-      end
-    end
-
-    def associate_all_nested_objects(nested_array, object=nil)
-      nested_array.each do |hash|
-        to_bind_models(object, hash[:essence][:object]) if object and validator.allow_to_associate_objects?(object, hash[:essence][:object])
-        associate_all_nested_objects(hash[:nested], hash[:essence][:object])
-      end
-    end
-
-    def associate_all_main_objects(data_for_save)
-      objects = Array.new(data_for_save)
-      while object = objects.delete( objects[0] )
-        object_1 = object[:essence][:object]
-        objects.each do |hash|
-          object_2 = hash[:essence][:object]
-          next if !object_1.new_record? and !object_2.new_record?
-          to_bind_models(object_1, object_2) 
-        end
-      end
-    end
-
-    def make_all_objects_with_attributes
-      params.each do |main_model_name, hash|
-        assign_objects_attributes(main_model_name, hash, data_for_save, :main)
-      end
-    end
-
-    def nested(model_name, nested_array, result_array)
-      nested_array.each do |nested_object|
-        assign_objects_attributes(model_name, nested_object, result_array, :nested)
-      end
-    end
-
     def is_nested?(value)
-      return false unless value.class == Array
-      value.select{ |e| e.class == ActionController::Parameters or e.class == Hash }.size == value.size
-    end
-
-    def assign_objects_attributes(model_name, hash, result_array, type)
-      object_hash          = {}
-      object               = type == :main ? form_object.send(model_name.to_sym) : get_class_of(model_name, base_module).new
-      object_hash[:nested] = []
-      object_attrs         = {}
-      hash.each do |key, val|
-        if is_nested?(val)
-          nested(key, val, object_hash[:nested])
-        else
-          object_attrs.merge!({"#{key}": val})
-        end
+      def nested?(e)
+        e.class == ActionController::Parameters or e.class == Hash
       end
-      object.assign_attributes(object_attrs)
-      object_hash[:essence] = {model: model_name, object: object}
-      result_array << object_hash
+
+      return true if nested?(value)
+
+      if value.class == Array
+        value.select{ |e| nested?(e) }.size == value.size
+      end
     end
 
-    # PARAMS FORMAT
-    # { 
-    #   "user"=> { 
-    #     "email"=>"kjbkj@bk.ddd", 
-    #     "password"=>"dsmndvvs", 
-    #     "password_confirmation"=>"jvdjshvd", 
-    #     "address_user"=> [
-    #       {
-    #         "first_name"=>"dsdsd", 
-    #         "last_name"=>"kjhkjbk", 
-    #         "order"=> [
-    #           {
-    #             "created_at"=>"kjkjb", 
-    #             "updated_at"=>"kjbkjb"
-    #           }
-    #         ]
-    #       }
-    #     ]
-    #   }
-    # }
-
-    # make_all_objects_with_attributes() EXAMPLE @data_for_save FORMAT
-    #
+    # data_for_assign format
+    # 
     # [
-    #   {
-    #     essence: {model: 'user', object: WoodShop::User.new(attributes)},
-    #     nested: [
-    #       {
-    #         essence: {model: 'address_user', object: WoodShop::AddressUser.new(attributes)},
-    #         nested: [
-    #           {
-    #             essence: {model: 'image', object: WoodShop::Image.new(attributes)},
-    #             nested: []
-    #           },
-    #           {
-    #             essence: {model: 'image', object: WoodShop::Image.new(attributes)},
-    #             nested: []
-    #           }
-    #         ] 
-    #       }
-    #     ]
+    #   { :model      => Product(id: integer, category_id: integer, brand_id: integer), 
+    #     :attributes => {:id=>"3871", :category_id=>"1", :brand_id=>"1"}, 
+    #     :nested     => [ 
+    #                      { :model      => FiltersProduct(id: integer, product_id: integer, filter_id: integer, value_id: integer), 
+    #                        :attributes => {:id=>"", :product_id=>"111", filter_id: "222", value_id: "333"}, 
+    #                        :nested     => []
+    #                      }
+    #                    ]
     #   }
     # ]
+    def make_hash_objects_and_nested_objects(key_params, value_params)
+      model      = get_class_of(key_params)
+      attributes = {}
+      nested     = []
+
+      value_params.each do |key, value|
+        if is_nested?(value)
+          if value.is_a?(Array)
+            value.each { |hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
+          elsif value.is_a?(ActionController::Parameters)
+            value.each { |index, hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
+          else
+            nested << make_hash_objects_and_nested_objects(key, value)
+          end
+        else
+          element = {key.to_sym => value}
+          attributes.merge!(element)
+        end
+      end
+
+      {model: model, attributes: attributes, nested: nested}
+    end
+
+    def make_data_for_assign
+      params.each do |main_model_name, attributes|
+        data_for_assign << make_hash_objects_and_nested_objects(main_model_name, attributes)
+      end
+    end
+
+
+    def assign_object_attributes(data)
+      object = data[:attributes][:id].to_i > 0 ? data[:model].find(data[:attributes][:id]) : data[:model].new
+      nested = []
+
+      object.assign_attributes(data[:attributes])
+      data[:nested].each do |nested_model|
+        nested << assign_object_attributes(nested_model)
+      end
+
+      {object: object, nested: nested}
+    end
+
+    def make_data_with_attributes
+      data_for_assign.each do |data|
+        data_with_attributes << assign_object_attributes(data)
+      end
+    end
+
+    def clear_nested_arr(arr_objects)
+      arr_objects.select do |data|
+        validator.save_if_nil_or_empty?(data[:object])
+      end
+    end
+
+    def delete_empty_objects(data_with_attributes)
+      data_with_attributes.each do |data|
+        data[:nested] = clear_nested_arr(data[:nested])
+        delete_empty_objects(data[:nested])
+      end
+    end
+
+    # def associate_all_main_objects(data_for_save)
+    #   objects = Array.new(data_for_save)
+    #   while object = objects.delete( objects[0] )
+    #     object_1 = object[:essence][:object]
+    #     objects.each do |hash|
+    #       object_2 = hash[:essence][:object]
+    #       next if !object_1.new_record? and !object_2.new_record?
+    #       to_bind_models(object_1, object_2) 
+    #     end
+    #   end
+    # end
+
+    def associate_arr_objects(data)
+      objects = Array.new(data)
+      while object = objects.delete( objects[0] )
+        object_1 = object[:object]
+        objects.each do |hash|
+          object_2 = hash[:object]
+          next if !object_1.new_record? and !object_2.new_record?
+          to_bind_models(object_1, object_2)
+        end
+      end
+    end
+
+    def associate_all_objects(nested_objects)
+      associate_arr_objects(nested_objects)
+
+      nested_objects.each do |data|
+        parent_with_nested_arr = Array.new(data[:nested]) << data
+        associate_arr_objects(parent_with_nested_arr)
+        associate_all_objects(data[:nested])
+      end
+    end
+
   end
 end
 

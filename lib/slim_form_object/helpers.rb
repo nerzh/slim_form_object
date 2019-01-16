@@ -3,9 +3,9 @@ module HelperMethods
     method( snake(model.to_s).to_sym ).call
   end
 
-  def get_class_of(snake_model_name, base_modulenil)
+  def get_class_of(snake_model_name, base_module=nil)
     pref = base_module ? (base_module.to_s + '::') : ''
-    Object.const_get( pref + snake_model_name.to_s.split('_').map(&:capitalize).join )
+    Module.const_get( pref + snake_model_name.to_s.split('_').map(&:capitalize).join )
   rescue
     nil
   end

@@ -4,7 +4,7 @@ module SlimFormObject
     include ::HelperMethods
     extend  ::HelperMethods
 
-    attr_accessor :params, :data_for_save
+    attr_accessor :params, :data_with_attributes
 
     class << self
       attr_accessor :base_module
@@ -13,20 +13,50 @@ module SlimFormObject
         define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
       end
 
-      def init_single_models(*args)
-        define_array_of_models(:array_of_all_models, args)
+      # data_structure
+      def input_data_structure(**structure)
+        instance_eval do
+          define_method(:data_structure) { structure }
+        end
+        
+        define_array_of_models(:array_of_all_models, get_main_models_from_structure(structure))
       end
-      alias_method :init_models, :init_single_models
 
-      def not_save_empty_object_for(*args)
+      # array_models_which_not_save_if_empty
+      def save_object_with_empty_attributes_for(*args)
         args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
-        self.instance_eval do
-          define_method(:array_models_which_not_save_if_empty) { args }
+        instance_eval do
+          define_method(:save_if_empty_arr) { args }
+        end
+      end
+
+      def save_object_with_nil_attributes_for(*args)
+        args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
+        instance_eval do
+          define_method(:save_if_nil_arr) { args }
+        end
+      end
+
+      # CALLBACKS
+      %w(allow_to_save_object allow_to_associate_objects before_save_form after_save_form before_validation_form after_validation_form).each do |method_name|
+        define_method("#{method_name}".to_sym) do |&block|
+          instance_eval do
+            define_method("#{method_name}_block".to_sym) { block }
+          end if block
+        end
+      end
+      # END CALLBACKS
+
+      private
+
+      def get_main_models_from_structure(structure)
+        structure.keys.map do |main_model_name|
+          get_class_of(main_model_name)
         end
       end
 
       def define_array_of_models(name, args)
-        self.instance_eval do
+        instance_eval do
           define_method(name) { args }
         end
         make_methods_for_objects_of(args)
@@ -45,22 +75,13 @@ module SlimFormObject
           end
         end
       end
-
-      # CALLBACKS
-      %w(allow_to_save_object allow_to_associate_objects before_save_form after_save_form before_validation_form after_validation_form).each do |method_name|
-        define_method("#{method_name}".to_sym) do |&block|
-          self.instance_eval do
-            define_method("#{method_name}_block".to_sym) { block }
-          end if block
-        end
-      end
-      # END CALLBACKS
     end
+
 
     def method_missing(name, *args, &block)
       if name[/_ids$/]
         model_name, attr_name = get_model_and_method_names(name)
-        return self.send(model_name.to_sym).send(attr_name.to_sym)
+        return send(model_name.to_sym).send(attr_name.to_sym)
       end
       super(name, args, block)
     end
@@ -91,6 +112,12 @@ module SlimFormObject
       Validator.new(self).validate_form_object
     end
 
+    def permit_params(params)
+      return {} if params.empty?
+
+      params.require(snake(model_name)).permit(structure)
+    end
+
     private
 
     def require_extensions
@@ -98,9 +125,9 @@ module SlimFormObject
     end
 
     def apply
-      assign             = Assign.new(self)
-      self.data_for_save = assign.apply_parameters
-      self.data_for_save = assign.associate_objects
+      assign                    = Assign.new(self)
+      self.data_with_attributes = assign.apply_parameters
+      self.data_with_attributes = assign.associate_objects
     end
 
     def get_or_add_default_objects
@@ -114,13 +141,41 @@ module SlimFormObject
     end
     
     def default_settings
-      define_singleton_method(:array_models_which_not_save_if_empty) { [] } unless respond_to?(:array_models_which_not_save_if_empty)
+      define_singleton_method(:save_if_empty_arr) { [] } unless respond_to?(:save_if_empty_arr)
+      define_singleton_method(:save_if_nil_arr) { [] } unless respond_to?(:save_if_nil_arr)
       define_singleton_method(:allow_to_associate_objects_block) { Proc.new { true } } unless respond_to?(:allow_to_associate_objects_block)
       define_singleton_method(:allow_to_save_object_block) { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
       define_singleton_method(:before_save_form_block) { Proc.new {} } unless respond_to?(:before_save_form_block)
       define_singleton_method(:after_save_form_block) { Proc.new {} } unless respond_to?(:after_save_form_block)
       define_singleton_method(:before_validation_form_block) { Proc.new {} } unless respond_to?(:before_validation_form_block)
       define_singleton_method(:after_validation_form_block) { Proc.new {} } unless respond_to?(:after_validation_form_block)
+    end
+
+    def permit_params(params)
+      return {} if params.empty?
+
+      params.require(:product_form).permit(
+        product: [
+          :id,
+          :category_id,
+          :group_id,
+          :brand_id,
+          filters_product: [
+              :id,
+              :filter_id,
+              :value_id,
+              :product_id,
+              filter: [:name],
+              value: [:name]
+          ]
+        ],
+        filters_product: [
+            :id,
+            :product_id,
+            :filter_id,
+            :value_id
+        ]
+      )
     end
   end
 end

@@ -2,13 +2,13 @@ module SlimFormObject
   class Saver
     include ::HelperMethods
 
-    attr_reader :form_object, :params, :validator, :base_module, :data_for_save
+    attr_reader :form_object, :params, :validator, :base_module, :data_with_attributes
 
     def initialize(form_object)
       @form_object           = form_object
       @base_module           = form_object.class.base_module
       @params                = form_object.params
-      @data_for_save         = form_object.data_for_save
+      @data_with_attributes  = form_object.data_with_attributes
       @validator             = Validator.new(form_object)
     end
 
@@ -41,18 +41,18 @@ module SlimFormObject
     end
 
     def save_main_objects
-      objects = Array.new(data_for_save)
+      objects = Array.new(data_with_attributes)
       while object = objects.delete( objects[0] )
-        object_1 = object[:essence][:object]
-        objects.each{ |hash| save_objects(object_1, hash[:essence][:object]) }
+        object_1 = object[:object]
+        objects.each { |hash| save_objects(object_1, hash[:object]) }
         save_last_model_if_not_associations(object_1)
       end
     end
 
     def save_nested_objects
-      data_for_save.each do |main_object|
+      data_with_attributes.each do |main_object|
         main_object[:nested].each do |object|
-          save_object(object[:essence][:object])
+          save_object(object[:object])
         end
       end
     end
@@ -68,7 +68,7 @@ module SlimFormObject
 
     def save_last_model_if_not_associations(object_1)
       association_trigger = false
-      data_for_save.each { |hash| association_trigger = true if get_reflection(object_1.class, hash[:essence][:object].class) }
+      data_with_attributes.each { |hash| association_trigger = true if get_reflection(object_1.class, hash[:object].class) }
       save_object(object_1) unless association_trigger
     end
   end
