@@ -2,19 +2,18 @@ module SlimFormObject
   class Saver
     include ::HelperMethods
 
-    attr_reader :form_object, :params, :validator, :base_module, :data_with_attributes
+    attr_reader :form_object, :params, :validator, :data_objects_arr
 
     def initialize(form_object)
-      @form_object           = form_object
-      @base_module           = form_object.class.base_module
-      @params                = form_object.params
-      @data_with_attributes  = form_object.data_with_attributes
-      @validator             = Validator.new(form_object)
+      @form_object                     = form_object
+      @params                          = form_object.params
+      @data_objects_arr                = form_object.data_objects_arr
+      @validator                       = Validator.new(form_object)
     end
 
     def save
       if form_object.valid?
-        save_all
+        _save
         return true
       end
       false
@@ -24,52 +23,69 @@ module SlimFormObject
 
     def save!
       if form_object.valid?
-        save_all
+        _save
       end
       true
     end
 
     private
 
-    def save_all
+    def _save
       ActiveRecord::Base.transaction do
         form_object.before_save_form_block.call(form_object)
-        save_main_objects
-        save_nested_objects
+        stage_1(data_objects_arr)
+        stage_2(data_objects_arr)
+        stage_3(data_objects_arr)
         form_object.after_save_form_block.call(form_object)
       end
     end
 
-    def save_main_objects
-      objects = Array.new(data_with_attributes)
-      while object = objects.delete( objects[0] )
-        object_1 = object[:object]
-        objects.each { |hash| save_objects(object_1, hash[:object]) }
-        save_last_model_if_not_associations(object_1)
+    # association per parent with all nested objects
+    def stage_1(objects)
+      objects.each do |data_object|
+        data_object.nested.each do |nested_data_object|
+          data_object.associate_with(nested_data_object.object, stage: 1)
+        end
+        stage_1(data_object.nested)
       end
     end
 
-    def save_nested_objects
-      data_with_attributes.each do |main_object|
-        main_object[:nested].each do |object|
-          save_object(object[:object])
+    # save all objects
+    def stage_2(objects)
+      objects.each do |data_object|
+        stage_2(data_object.nested)
+        save_object(data_object.object)
+      end
+    end
+
+    # associate and save between a nested objects
+    def stage_3(objects)
+      associate_and_save_objects(objects)
+
+      objects.each do |data_object|
+        stage_3(data_object.nested)
+      end
+    end
+
+    def associate_and_save_objects(data_objects)
+      objects = Array.new(data_objects)
+      while data_object_1 = objects.delete( objects[0] )
+        objects.each do |data_object_2|
+          obj = data_object_1.associate_with(data_object_2.object, stage: 2)
+          save_object(obj)
         end
       end
     end
 
-    def save_objects(object_1, object_2)
-      object_for_save = to_bind_models(object_1, object_2)
-      save_object(object_for_save)
+    def allow_to_save(object_of_model)
+      object_of_model.valid? and object_of_model.changed? and validator.allow_to_save_object?(object_of_model)
     end
 
     def save_object(object_of_model)
-      object_of_model.save! if validator.allow_to_save_object?(object_of_model)
+      if allow_to_save(object_of_model)
+          object_of_model.save!
+      end
     end
 
-    def save_last_model_if_not_associations(object_1)
-      association_trigger = false
-      data_with_attributes.each { |hash| association_trigger = true if get_reflection(object_1.class, hash[:object].class) }
-      save_object(object_1) unless association_trigger
-    end
   end
 end

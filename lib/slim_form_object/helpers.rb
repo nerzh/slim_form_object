@@ -11,13 +11,13 @@ module HelperMethods
   end
 
   def to_bind_models(object_1, object_2)
-    if object_2.new_record?
-      assignment_to_each_other(object_2, object_1)
-    else
+    if object_1.new_record?
       assignment_to_each_other(object_1, object_2)
+      object_1
+    else
+      assignment_to_each_other(object_2, object_1)
+      object_2
     end
-
-    object_1
   end
 
   def assignment_to_each_other(object_1, object_2)

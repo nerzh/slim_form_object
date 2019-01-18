@@ -4,7 +4,7 @@ module SlimFormObject
     include ::HelperMethods
     extend  ::HelperMethods
 
-    attr_accessor :params, :data_with_attributes
+    attr_accessor :params, :data_objects_arr
 
     class << self
       attr_accessor :base_module
@@ -23,17 +23,17 @@ module SlimFormObject
       end
 
       # array_models_which_not_save_if_empty
-      def save_object_with_empty_attributes_for(*args)
+      def not_save_empty_object_for(*args)
         args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
         instance_eval do
-          define_method(:save_if_empty_arr) { args }
+          define_method(:not_save_if_empty_arr) { args }
         end
       end
 
-      def save_object_with_nil_attributes_for(*args)
+      def not_save_nil_object_for(*args)
         args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
         instance_eval do
-          define_method(:save_if_nil_arr) { args }
+          define_method(:not_save_if_nil_arr) { args }
         end
       end
 
@@ -77,7 +77,6 @@ module SlimFormObject
       end
     end
 
-
     def method_missing(name, *args, &block)
       if name[/_ids$/]
         model_name, attr_name = get_model_and_method_names(name)
@@ -114,8 +113,7 @@ module SlimFormObject
 
     def permit_params(params)
       return {} if params.empty?
-
-      params.require(snake(model_name)).permit(structure)
+      params.require(snake(model_name.name).gsub(/_+/, '_')).permit(data_structure)
     end
 
     private
@@ -125,9 +123,8 @@ module SlimFormObject
     end
 
     def apply
-      assign                    = Assign.new(self)
-      self.data_with_attributes = assign.apply_parameters
-      self.data_with_attributes = assign.associate_objects
+      assign                = Assign.new(self)
+      self.data_objects_arr = assign.apply_parameters_and_make_objects
     end
 
     def get_or_add_default_objects
@@ -141,42 +138,16 @@ module SlimFormObject
     end
     
     def default_settings
-      define_singleton_method(:save_if_empty_arr) { [] } unless respond_to?(:save_if_empty_arr)
-      define_singleton_method(:save_if_nil_arr) { [] } unless respond_to?(:save_if_nil_arr)
+      define_singleton_method(:not_save_if_empty_arr)            { [] } unless respond_to?(:not_save_if_empty_arr)
+      define_singleton_method(:not_save_if_nil_arr)              { [] } unless respond_to?(:not_save_if_nil_arr)
       define_singleton_method(:allow_to_associate_objects_block) { Proc.new { true } } unless respond_to?(:allow_to_associate_objects_block)
-      define_singleton_method(:allow_to_save_object_block) { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
-      define_singleton_method(:before_save_form_block) { Proc.new {} } unless respond_to?(:before_save_form_block)
-      define_singleton_method(:after_save_form_block) { Proc.new {} } unless respond_to?(:after_save_form_block)
-      define_singleton_method(:before_validation_form_block) { Proc.new {} } unless respond_to?(:before_validation_form_block)
-      define_singleton_method(:after_validation_form_block) { Proc.new {} } unless respond_to?(:after_validation_form_block)
+      define_singleton_method(:allow_to_save_object_block)       { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
+      define_singleton_method(:before_save_form_block)           { Proc.new {} } unless respond_to?(:before_save_form_block)
+      define_singleton_method(:after_save_form_block)            { Proc.new {} } unless respond_to?(:after_save_form_block)
+      define_singleton_method(:before_validation_form_block)     { Proc.new {} } unless respond_to?(:before_validation_form_block)
+      define_singleton_method(:after_validation_form_block)      { Proc.new {} } unless respond_to?(:after_validation_form_block)
     end
 
-    def permit_params(params)
-      return {} if params.empty?
-
-      params.require(:product_form).permit(
-        product: [
-          :id,
-          :category_id,
-          :group_id,
-          :brand_id,
-          filters_product: [
-              :id,
-              :filter_id,
-              :value_id,
-              :product_id,
-              filter: [:name],
-              value: [:name]
-          ]
-        ],
-        filters_product: [
-            :id,
-            :product_id,
-            :filter_id,
-            :value_id
-        ]
-      )
-    end
   end
 end
 
