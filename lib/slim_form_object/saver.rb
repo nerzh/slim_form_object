@@ -4,6 +4,8 @@ module SlimFormObject
 
     attr_reader :form_object, :params, :validator, :data_objects_arr
 
+    STAGE_3 = 3
+
     def initialize(form_object)
       @form_object                     = form_object
       @params                          = form_object.params
@@ -30,9 +32,18 @@ module SlimFormObject
 
     private
 
+    def regenerate_objects_with_attributes(objects)
+      objects.each do |object|
+        object.regenerate_object
+        object.assign_attributes!
+        regenerate_objects_with_attributes(object.nested)
+      end
+    end
+
     def _save
+      regenerate_objects_with_attributes(data_objects_arr)
+
       ActiveRecord::Base.transaction do
-        form_object.before_save_form_block.call(form_object)
         stage_1(data_objects_arr)
         stage_2(data_objects_arr)
         stage_3(data_objects_arr)
@@ -44,7 +55,7 @@ module SlimFormObject
     def stage_1(objects)
       objects.each do |data_object|
         data_object.nested.each do |nested_data_object|
-          data_object.associate_with(nested_data_object.object, stage: 1)
+          data_object.associate_with(nested_data_object.object)
         end
         stage_1(data_object.nested)
       end
@@ -71,18 +82,14 @@ module SlimFormObject
       objects = Array.new(data_objects)
       while data_object_1 = objects.delete( objects[0] )
         objects.each do |data_object_2|
-          obj = data_object_1.associate_with(data_object_2.object, stage: 2)
+          obj = data_object_1.associate_with(data_object_2.object, stage: STAGE_3)
           save_object(obj)
         end
       end
     end
 
-    def allow_to_save(object_of_model)
-      object_of_model.valid? and object_of_model.changed? and validator.allow_to_save_object?(object_of_model)
-    end
-
     def save_object(object_of_model)
-      if allow_to_save(object_of_model)
+      if validator.allow_to_save_object?(object_of_model)
           object_of_model.save!
       end
     end

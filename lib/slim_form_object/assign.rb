@@ -2,13 +2,14 @@ module SlimFormObject
   class Assign
     include ::HelperMethods
 
-    attr_reader :form_object, :params, :data_for_assign
+    attr_reader :form_object, :params, :data_for_assign, :validator
     attr_accessor :data_objects_arr
 
     def initialize(form_object)
       @form_object                     = form_object
       @params                          = form_object.params
       @structure                       = form_object.data_structure
+      @validator                       = Validator.new(form_object)
       @data_for_assign                 = []
       @data_objects_arr                = []
     end
@@ -16,6 +17,7 @@ module SlimFormObject
     def apply_parameters_and_make_objects
       parse_params
       @data_objects_arr = make_data_objects(data_for_assign)
+      clean_data_objects_arr(data_objects_arr)
       associate_all_objects(data_objects_arr)
 
       data_objects_arr
@@ -43,10 +45,10 @@ module SlimFormObject
 
       value_params.each do |key, value|
         if is_nested?(value)
-          if value.is_a?(Array)
+          if nested_as_hash?(value)
+            value.values.each { |hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
+          elsif value.is_a?(Array)
             value.each { |hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
-          elsif value.is_a?(ActionController::Parameters)
-            value.each { |index, hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
           else
             nested << make_hash_objects_and_nested_objects(key, value)
           end
@@ -59,15 +61,19 @@ module SlimFormObject
       {model: model, attributes: attributes, nested: nested}
     end
 
+    def nested_as_hash?(values)
+      values.select{ |key, value| key.to_i.to_s == key }.size == values.size
+    end
+
     def parse_params
-      params.each do |main_model_name, attributes|
+      params.to_h.each do |main_model_name, attributes|
         data_for_assign << make_hash_objects_and_nested_objects(main_model_name, attributes)
       end
     end
 
     def is_nested?(value)
       def nested?(e)
-        e.class == ActionController::Parameters or e.class == Hash
+        e.class == ActionController::Parameters or e.class == Hash or e.class == ActiveSupport::HashWithIndifferentAccess
       end
 
       return true if nested?(value)
@@ -90,7 +96,7 @@ module SlimFormObject
       while data_object_1 = objects.delete( objects[0] )
         associate_all_objects(data_object_1.nested)
         objects.each do |data_object_2|
-          data_object_1.associate_with(data_object_2.associated_object)
+          data_object_1.associate_with(data_object_2.object)
         end
       end
     end
@@ -100,7 +106,7 @@ module SlimFormObject
 
       objects.each do |data_object|
         data_object.nested.each do |nested_data_object|  
-          data_object.associate_with(nested_data_object.associated_object)
+          data_object.associate_with(nested_data_object.object)
         end
       end
     end
@@ -108,7 +114,7 @@ module SlimFormObject
     def clean_data_objects_arr(objects)
       objects.select! do |data_object|
         clean_data_objects_arr(data_object.nested)
-        data_object.save_if_nil_or_empty?
+        validator.allow_object_processing?(data_object)
       end
     end
 

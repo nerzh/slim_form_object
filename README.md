@@ -81,13 +81,24 @@ class ReviewForm < SlimFormObject::Base
   base_module = EngineName              # optional - default nil, e.g. you using engine and your models are named EngineName::User  
   not_save_empty_object_for Rating      # optional - if you do not want to validate and save object Rating with params like empty string
   not_save_nil_object_for Rating        # optional - if you do not want to validate and save object Rating with empty params like {} or all attributes is nil
-  
-  before_save_form           { |form|  } # code inside current activerecord transaction before save this form 
+   
   after_save_form            { |form|  } # code inside current activerecord transaction after save this form 
-  before_validation_form     { |form|  } # ...
-  after_validation_form      { |form|  } # ...
-  allow_to_save_object       { |object|  last argument must be true or false } # ...
-  allow_to_associate_objects { |object_1, object_2|  last argument must be true or false } # ...
+  before_validation_form     { |form|  } 
+  allow_to_save_object       { |object|  true or false } 
+  allow_to_validate_object   { |data_object|  true or false } 
+  allow_object_processing { |data_object|  true or false } # ignore object if false
+  
+  allow_object_processing do |data_object|
+  
+    case data_object.model.to_s
+    when 'Rating'
+      # e.g. do not save object if input rating value <= 0 
+      data_object.attributes[:value]&.to_i <= 0
+    else
+      # html form can send empty attributes and method .blank_or_empty?(except fields: []) will check it. Also we can ignore :id check or any input attributes with argument :except_fields  
+      !data_object.blank_or_empty?(except_fileds: [:id]) 
+    end
+  end
   
   def initialize(params: {}, current_user: nil)
     # hash of http parameters must be for automatic save input attributes
@@ -126,6 +137,8 @@ end
 
 ## EXAMPLES OF HTML FORMS (Haml) IF YOU USE ACTIONVIEW
 
+## EXAMPLES OF HTML FORMS (Haml) IF YOU USE ACTIONVIEW
+
 !!! To specify model membership you should to use helper fields_for !!!
 
 example name of attributes: 
@@ -133,10 +146,27 @@ example name of attributes:
 ```yaml
 = form_for @reviewForm, url: reviews_path, method: 'POST', html: {} do |f|
   = f.fields_for :rating, @reviewForm.rating do |n|
+    
+    # id is needed in sent attributes that to update an already existing object
+    = n.text_field :id, hidden: true
     = n.number_field :value, placeholder: "Rating"
   = f.fields_for :review_book, @reviewForm.review_book do |n|
+    = n.text_field :id, hidden: true
     = n.text_field :theme, placeholder: "Theme"
     = n.text_field :text,  placeholder: "Text"
+```
+html without actionview
+
+```html
+<form action="/user/review" method="post">
+  <input hidden="hidden" type="text" value="1" name="review_form[rating][id]">
+  <input type="text" value="1" name="review_form[rating][id]">
+  <input type="number" name="review_form[rating][value]">
+  
+  <input hidden="hidden" type="text" value="1" name="review_form[review_book][id]">
+  <input type="text" name="review_form[review_book][theme]">
+  <input type="text" name="review_form[review_book][text]">
+</form>
 ```
 ## FOR COLLECTION
 
@@ -175,7 +205,6 @@ for example
     = n.fields_for :address, Address.new, {index: '0'} do |z|
       = z.text_field  :city
       = z.text_field  :street
-      = z.date_select :created_at
     # second address
     = n.fields_for :address, Address.new, {index: '1'} do |z|
       = z.text_field  :city
@@ -186,6 +215,26 @@ for example
     ...
 ``` 
 
+
+```html
+  <form action="/user/review" method="post">
+  <input hidden="hidden" type="text" value="1" name="review_form[rating][id]">
+  <input type="text" value="1" name="review_form[rating][id]">
+  <input type="number" name="review_form[rating][value]">
+
+  <input hidden="hidden" type="text" value="1" name="review_form[review_book][id]">
+  <input type="text" name="review_form[review_book][theme]">
+  <input type="text" name="review_form[review_book][text]">
+  
+  <input type="text" name="review_form[review_book][user][address][0][city]">
+  <input type="text" name="review_form[review_book][user][address][0][street]">
+  
+  <input type="text" name="review_form[review_book][user][address][1][city]">
+  <input type="text" name="review_form[review_book][user][address][1][street]">
+  
+  ...
+</form>
+```
 ## IN CALLBACKS
 You have access to hash of data for save which you can use for change objects inside callbacks
 

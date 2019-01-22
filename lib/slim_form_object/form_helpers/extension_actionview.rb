@@ -54,7 +54,6 @@ module HelperMethods
   end
 end
 
-
 if const_exists?('ActionView::Helpers')
 
   module ActionView
@@ -76,10 +75,8 @@ if const_exists?('ActionView::Helpers')
           return sfo_get_date_tag_name(prefix, field_name, options) if sfo_date_attr?(field_name)
 
           @options[:discard_type] ? prefix : "#{prefix}[#{field_name}]"
-
         end
       end
-
       
     end
   end

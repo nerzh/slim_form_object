@@ -61,4 +61,12 @@ module HelperMethods
     return $1 if string =~ /^.+::(.+)$/
     string
   end
+  
+  def define_classes_array_with_name(name, args)
+    args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
+    instance_eval do
+      define_method(name) { args }
+    end
+  end
+
 end

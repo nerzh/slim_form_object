@@ -22,23 +22,15 @@ module SlimFormObject
         define_array_of_models(:array_of_all_models, get_main_models_from_structure(structure))
       end
 
-      # array_models_which_not_save_if_empty
-      def not_save_empty_object_for(*args)
-        args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
-        instance_eval do
-          define_method(:not_save_if_empty_arr) { args }
-        end
-      end
-
-      def not_save_nil_object_for(*args)
-        args.each { |model| raise "#{model.to_s} - type is not a Class" if model.class != Class }
-        instance_eval do
-          define_method(:not_save_if_nil_arr) { args }
-        end
-      end
-
       # CALLBACKS
-      %w(allow_to_save_object allow_to_associate_objects before_save_form after_save_form before_validation_form after_validation_form).each do |method_name|
+      [
+        'after_validation_form',
+        'after_save_form',         
+        'after_save_object', 
+        'allow_to_save_object', 
+        'allow_to_validate_object',
+        'allow_object_processing'
+      ].each do |method_name|
         define_method("#{method_name}".to_sym) do |&block|
           instance_eval do
             define_method("#{method_name}_block".to_sym) { block }
@@ -138,14 +130,18 @@ module SlimFormObject
     end
     
     def default_settings
-      define_singleton_method(:not_save_if_empty_arr)            { [] } unless respond_to?(:not_save_if_empty_arr)
-      define_singleton_method(:not_save_if_nil_arr)              { [] } unless respond_to?(:not_save_if_nil_arr)
-      define_singleton_method(:allow_to_associate_objects_block) { Proc.new { true } } unless respond_to?(:allow_to_associate_objects_block)
-      define_singleton_method(:allow_to_save_object_block)       { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
-      define_singleton_method(:before_save_form_block)           { Proc.new {} } unless respond_to?(:before_save_form_block)
-      define_singleton_method(:after_save_form_block)            { Proc.new {} } unless respond_to?(:after_save_form_block)
-      define_singleton_method(:before_validation_form_block)     { Proc.new {} } unless respond_to?(:before_validation_form_block)
-      define_singleton_method(:after_validation_form_block)      { Proc.new {} } unless respond_to?(:after_validation_form_block)
+      define_singleton_method(:after_validation_form_block)    { Proc.new {} }       unless respond_to?(:after_validation_form_block)
+      define_singleton_method(:after_save_form_block)          { Proc.new {} }       unless respond_to?(:before_save_form_block)
+      define_singleton_method(:after_save_object_block)        { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
+      define_singleton_method(:allow_to_validate_object_block) { Proc.new { true } } unless respond_to?(:allow_to_validate_object_block)
+      
+      define_singleton_method(:allow_to_save_object_block) do 
+        Proc.new { |object|  object.valid? and object.changed? } 
+      end unless respond_to?(:allow_to_save_object_block)
+
+      define_singleton_method(:allow_object_processing_block) do
+        Proc.new { |data_object| data_object.blank_or_empty? } 
+      end unless respond_to?(:allow_object_processing_block)
     end
 
   end
