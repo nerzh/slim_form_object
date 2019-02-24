@@ -4,10 +4,10 @@ module SlimFormObject
     include ::HelperMethods
     extend  ::HelperMethods
 
-    attr_accessor :params, :data_objects_arr
+    attr_accessor :params, :data_objects_arr, :base_modules
 
     class << self
-      attr_accessor :base_module
+      attr_accessor :base_modules
 
       def set_model_name(name)
         define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
@@ -43,7 +43,7 @@ module SlimFormObject
 
       def get_main_models_from_structure(structure)
         structure.keys.map do |main_model_name|
-          get_class_of(main_model_name)
+          get_class_of(main_model_name, base_modules[main_model_name])
         end
       end
 
@@ -79,7 +79,8 @@ module SlimFormObject
 
     def initialize(params: {})
       require_extensions
-      self.params = params
+      self.base_modules = self.class.base_modules
+      self.params       = params
       get_or_add_default_objects
       default_settings
     end
@@ -140,7 +141,8 @@ module SlimFormObject
       end unless respond_to?(:allow_to_save_object_block)
 
       define_singleton_method(:allow_object_processing_block) do
-        Proc.new { |data_object| data_object.blank_or_empty? } 
+        # Proc.new { |data_object| data_object.blank_or_empty? }
+        Proc.new { |data_object| true }
       end unless respond_to?(:allow_object_processing_block)
     end
 

@@ -7,7 +7,7 @@ module SlimFormObject
 
     def initialize(name: nil, attributes: {}, form_object: nil)
       @name              = name
-      @model             = get_class_of(name)
+      @model             = get_class_of(name, form_object&.base_modules[name&.to_sym])
       @attributes        = attributes
       @form_object       = form_object
       @object            = make_object

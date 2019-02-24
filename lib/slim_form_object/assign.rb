@@ -39,7 +39,7 @@ module SlimFormObject
     #   }
     # ]
     def make_hash_objects_and_nested_objects(key_params, value_params)
-      model      = get_class_of(key_params)
+      model      = get_class_of(key_params, form_object.base_modules[key_params.to_sym])
       attributes = {}
       nested     = []
 
