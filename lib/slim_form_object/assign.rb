@@ -15,7 +15,9 @@ module SlimFormObject
     end
 
     def apply_parameters_and_make_objects
-      parse_params
+      form_object.check_params_block.call(form_object, params)
+      
+      parse_params(params)
       @data_objects_arr = make_data_objects(data_for_assign)
       clean_data_objects_arr(data_objects_arr)
       associate_all_objects(data_objects_arr)
@@ -65,7 +67,7 @@ module SlimFormObject
       values.select{ |key, value| key.to_i.to_s == key }.size == values.size
     end
 
-    def parse_params
+    def parse_params(params)
       params.to_h.each do |main_model_name, attributes|
         data_for_assign << make_hash_objects_and_nested_objects(main_model_name, attributes)
       end

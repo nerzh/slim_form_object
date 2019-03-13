@@ -36,7 +36,15 @@ module HelperMethods
   end
 
   def get_reflection(class1, class2)
-    class1.reflections.select{ |k,v| v.klass == class2 }.values.first
+    class1.reflections.select do |k,v|
+      if v&.options&.send(:[], :polymorphic)
+        if class2.reflections.select{ |k,v| v.klass == class1 }.values.first
+          true
+        end
+      else
+        v.klass == class2
+      end
+    end.values.first
   end
 
   def type_association(reflection)

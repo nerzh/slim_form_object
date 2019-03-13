@@ -29,7 +29,8 @@ module SlimFormObject
         'after_save_object', 
         'allow_to_save_object', 
         'allow_to_validate_object',
-        'allow_object_processing'
+        'allow_object_processing',
+        'check_params'
       ].each do |method_name|
         define_method("#{method_name}".to_sym) do |&block|
           instance_eval do
@@ -133,6 +134,7 @@ module SlimFormObject
     def default_settings
       define_singleton_method(:after_validation_form_block)    { Proc.new {} }       unless respond_to?(:after_validation_form_block)
       define_singleton_method(:after_save_form_block)          { Proc.new {} }       unless respond_to?(:before_save_form_block)
+      define_singleton_method(:check_params_block)             { Proc.new {} }       unless respond_to?(:check_params_block)
       define_singleton_method(:after_save_object_block)        { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
       define_singleton_method(:allow_to_validate_object_block) { Proc.new { true } } unless respond_to?(:allow_to_validate_object_block)
       
