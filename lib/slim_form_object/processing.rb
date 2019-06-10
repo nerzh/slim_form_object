@@ -13,6 +13,10 @@ module SlimFormObject
         define_method(:model_name) { ActiveModel::Name.new(self, nil, name) }
       end
 
+      def base_modules
+        @base_modules || {}
+      end
+
       # data_structure
       def input_data_structure(**structure)
         instance_eval do
