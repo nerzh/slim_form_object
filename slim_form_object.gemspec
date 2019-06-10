@@ -6,12 +6,12 @@ require 'slim_form_object/version'
 Gem::Specification.new do |spec|
   spec.name          = "slim_form_object"
   spec.version       = SlimFormObject::VERSION
-  spec.authors       = ["woodcrust"]
-  spec.email         = ["roboucrop@gmail.com"]
+  spec.authors       = ["nerzh"]
+  spec.email         = ["emptystamp@gmail.com"]
 
   spec.summary       = %q{This is form object}
   spec.description   = %q{Very simple automatic generation and saving nested attributes of models from html form. ActiveModel.}
-  spec.homepage      = "https://github.com/woodcrust/slim_form_object"
+  spec.homepage      = "https://github.com/nerzh/slim_form_object"
   spec.license       = "MIT"
 
   spec.files         = Dir['lib/**/*']
