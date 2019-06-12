@@ -3,11 +3,17 @@ module HelperMethods
     method( snake(model.to_s).to_sym ).call
   end
 
+  def make_constant_name(snake_model_name, base_module=nil)
+      pref = base_module ? (base_module.to_s + '::') : ''
+      pref + snake_model_name.to_s.split('_').map(&:capitalize).join
+  end
+
   def get_class_of(snake_model_name, base_module=nil)
-    pref = base_module ? (base_module.to_s + '::') : ''
-    Module.const_get( pref + snake_model_name.to_s.split('_').map(&:capitalize).join )
-  rescue
-    nil
+    Module.const_get( make_constant_name(snake_model_name, base_module) )
+  rescue NameError => ex
+    unless ex.class == NameError
+      raise ex
+    end
   end
 
   def to_bind_models(object_1, object_2)
