@@ -47,10 +47,10 @@ module SlimFormObject
 
       value_params.each do |key, value|
         if is_nested?(value)
-          if nested_as_hash?(value)
-            value.values.each { |hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
-          elsif value.is_a?(Array)
+          if value.is_a?(Array)
             value.each { |hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
+          elsif nested_as_hash?(value)
+            value.values.each { |hash_params| nested << make_hash_objects_and_nested_objects(key, hash_params) }
           else
             nested << make_hash_objects_and_nested_objects(key, value)
           end
