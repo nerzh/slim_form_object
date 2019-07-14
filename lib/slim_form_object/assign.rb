@@ -44,6 +44,9 @@ module SlimFormObject
       model      = get_class_of(key_params, form_object.base_modules[key_params.to_sym])
       attributes = {}
       nested     = []
+      unless model
+        raise "method get_class_of(#{key_params}, #{form_object.base_modules[key_params.to_sym]}) return nil, maybe set base_module for #{key_params}" 
+      end
 
       value_params.each do |key, value|
         if is_nested?(value)
