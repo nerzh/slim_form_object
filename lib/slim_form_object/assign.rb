@@ -20,10 +20,13 @@ module SlimFormObject
       parse_params(params)
       @data_objects_arr = make_data_objects(data_for_assign)
       clean_data_objects_arr(data_objects_arr)
+      
       associate_all_objects(data_objects_arr)
 
       data_objects_arr
     end
+
+
 
     private
 
@@ -96,32 +99,35 @@ module SlimFormObject
       end
     end
 
-    def associate_objects(data_objects)
-      objects = Array.new(data_objects)
-      while data_object_1 = objects.delete( objects[0] )
-        associate_all_objects(data_object_1.nested)
-        objects.each do |data_object_2|
-          data_object_1.associate_with(data_object_2.object)
-        end
-      end
-    end
-
-    def associate_all_objects(objects)
-      associate_objects(objects)
-
-      objects.each do |data_object|
-        data_object.nested.each do |nested_data_object|  
-          data_object.associate_with(nested_data_object.object)
-        end
-      end
-    end
-
     def clean_data_objects_arr(objects)
       objects.select! do |data_object|
         clean_data_objects_arr(data_object.nested)
         validator.allow_object_processing?(data_object)
       end
     end
+
+    # ASSOCIATE
+    def associate_all_objects(objects)
+      associate_nested_objects(objects)
+      associate_parents_with_nested_objects(objects)
+    end
+
+    def associate_nested_objects(data_objects)
+      cloned_objects = Array.new(data_objects)
+      while data_object_1 = cloned_objects.delete(cloned_objects[0])
+        associate_nested_objects(data_object_1.nested)
+        cloned_objects.each do |data_object_2|
+          data_object_1.associate_with(data_object_2.object)
+        end
+      end
+    end
+
+    def associate_parents_with_nested_objects(data_objects)
+      iterate_parents_with_nested_objects(data_objects) do |data_object, nested_data_object|
+        data_object.associate_with(nested_data_object.object)
+      end
+    end
+    # END ASSOCIATE
 
   end
 end

@@ -4,8 +4,8 @@ module HelperMethods
   end
 
   def make_constant_name(snake_model_name, base_module=nil)
-      pref = base_module ? (base_module.to_s + '::') : ''
-      pref + snake_model_name.to_s.split('_').map(&:capitalize).join
+    pref = base_module ? (base_module.to_s + '::') : ''
+    pref + snake_model_name.to_s.split('_').map(&:capitalize).join
   end
 
   def get_class_of(snake_model_name, base_module=nil)
@@ -29,7 +29,7 @@ module HelperMethods
   def assignment_to_each_other(object_1, object_2)
     type, method_name = get_type_and_name_of_association(object_1.class, object_2.class)
 
-    if    type == :belongs_to or type == :has_one
+    if type == :belongs_to or type == :has_one
       object_1.send( "#{method_name.to_s}=", object_2 )
     elsif type == :has_many   or type == :has_and_belongs_to_many
       object_1.method(method_name).call << object_2
@@ -83,4 +83,14 @@ module HelperMethods
     end
   end
 
+  def iterate_parents_with_nested_objects(data_objects, &block)
+    data_objects.each do |data_object|
+      iterate_parents_with_nested_objects(data_object.nested, &block)
+      data_object.nested.each do |nested_data_object|
+        block.call(data_object, nested_data_object) if block
+      end
+    end
+  end
+
 end
+

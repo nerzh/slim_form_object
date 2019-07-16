@@ -15,8 +15,8 @@ module SlimFormObject
       assign_attributes!
     end
 
-    def associate_with(other_object, stage: nil)
-      return object if (stage != Saver::STAGE_3 and !object.new_record? and !other_object.new_record?)
+    def associate_with(other_object, force: false)
+      return object if ( force and (!object.new_record? and !other_object.new_record?) )
 
       to_bind_models(object, other_object)
     end

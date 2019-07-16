@@ -4,8 +4,6 @@ module SlimFormObject
 
     attr_reader :form_object, :params, :validator, :data_objects_arr
 
-    STAGE_3 = 3
-
     def initialize(form_object)
       @form_object                     = form_object
       @params                          = form_object.params
@@ -47,6 +45,7 @@ module SlimFormObject
         stage_1(data_objects_arr)
         stage_2(data_objects_arr)
         stage_3(data_objects_arr)
+        stage_4(data_objects_arr)
         form_object.after_save_form_block.call(form_object)
       end
     end
@@ -61,7 +60,7 @@ module SlimFormObject
       end
     end
 
-    # save all objects
+    # save all nested objects
     def stage_2(objects)
       objects.each do |data_object|
         stage_2(data_object.nested)
@@ -79,12 +78,17 @@ module SlimFormObject
     end
 
     def associate_and_save_objects(data_objects)
-      objects = Array.new(data_objects)
-      while data_object_1 = objects.delete( objects[0] )
-        objects.each do |data_object_2|
-          obj = data_object_1.associate_with(data_object_2.object, stage: STAGE_3)
-          save_object(obj)
-        end
+      data_objects.iterate_with_each_pair do |data_object_1, data_object_2|
+        obj = data_object_1.associate_with(data_object_2.object, force: true)
+        save_object(obj)
+      end
+    end
+
+    # association per parent with all nested objects with FORCE TRUE option
+    def stage_4(objects)
+      iterate_parents_with_nested_objects(objects) do |data_object, nested_data_object|
+        obj = data_object.associate_with(nested_data_object.object, force: true)
+        save_object(obj)
       end
     end
 
@@ -93,6 +97,5 @@ module SlimFormObject
           object_of_model.save!
       end
     end
-
   end
 end
