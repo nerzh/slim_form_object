@@ -44,9 +44,11 @@ module HelperMethods
   def get_reflection(class1, class2)
     class1.reflections.select do |k,v|
       if v&.options&.send(:[], :polymorphic)
-        if class2.reflections.select{ |k,v| v.klass == class1 }.values.first
-          true
-        end
+        temp_reflections = class2.reflections.select do |k,v|
+          v&.options&.send(:[], :polymorphic) ? false : (v.klass == class1)
+        end.values
+
+        !temp_reflections.empty?
       else
         v.klass == class2
       end
