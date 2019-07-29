@@ -135,6 +135,21 @@ class ReviewController < ApplicationController
 end
 ```
 
+
+## CALLBACKS
+
+- after_validation_form { |form| }
+- after_save_form { |form| }
+- after_save_object { |form| }
+- allow_object_processing { |data_object| true }
+- allow_to_validate_object { |data_object| true }
+- allow_to_save_object { |object| object.changed? }
+- check_params_block { |form, params| }
+
+
+
+
+
 ## EXAMPLES OF HTML FORMS (Haml) IF YOU USE ACTIONVIEW
 
 ## EXAMPLES OF HTML FORMS (Haml) IF YOU USE ACTIONVIEW

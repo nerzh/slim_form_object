@@ -30,10 +30,12 @@ module SlimFormObject
       [
         'after_validation_form',
         'after_save_form',         
-        'after_save_object', 
-        'allow_to_save_object', 
-        'allow_to_validate_object',
+        'after_save_object',
+
         'allow_object_processing',
+        'allow_to_validate_object',
+        'allow_to_save_object',
+
         'check_params'
       ].each do |method_name|
         define_method("#{method_name}".to_sym) do |&block|
@@ -136,20 +138,13 @@ module SlimFormObject
     end
     
     def default_settings
-      define_singleton_method(:after_validation_form_block)    { Proc.new {} }       unless respond_to?(:after_validation_form_block)
-      define_singleton_method(:after_save_form_block)          { Proc.new {} }       unless respond_to?(:before_save_form_block)
-      define_singleton_method(:check_params_block)             { Proc.new {} }       unless respond_to?(:check_params_block)
-      define_singleton_method(:after_save_object_block)        { Proc.new { true } } unless respond_to?(:allow_to_save_object_block)
+      define_singleton_method(:after_validation_form_block)    { Proc.new {} } unless respond_to?(:after_validation_form_block)
+      define_singleton_method(:after_save_form_block)          { Proc.new {} } unless respond_to?(:after_save_form_block)
+      define_singleton_method(:after_save_object_block)        { Proc.new { true } } unless respond_to?(:after_save_object_block)      
+      define_singleton_method(:allow_object_processing_block)  { Proc.new { |data_object| true } } unless respond_to?(:allow_object_processing_block)
       define_singleton_method(:allow_to_validate_object_block) { Proc.new { true } } unless respond_to?(:allow_to_validate_object_block)
-      
-      define_singleton_method(:allow_to_save_object_block) do 
-        Proc.new { |object| object.changed? }
-      end unless respond_to?(:allow_to_save_object_block)
-
-      define_singleton_method(:allow_object_processing_block) do
-        # Proc.new { |data_object| data_object.blank_or_empty? }
-        Proc.new { |data_object| true }
-      end unless respond_to?(:allow_object_processing_block)
+      define_singleton_method(:allow_to_save_object_block)     { Proc.new { |object| object.changed? } } unless respond_to?(:allow_to_save_object_block)
+      define_singleton_method(:check_params_block)             { Proc.new {} } unless respond_to?(:check_params_block)
     end
 
   end
