@@ -22,7 +22,6 @@ module SlimFormObject
     end
 
     def save!
-      form_object.validate
       _save
     end
 
