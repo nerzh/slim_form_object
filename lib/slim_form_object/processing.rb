@@ -143,7 +143,7 @@ module SlimFormObject
       define_singleton_method(:allow_to_validate_object_block) { Proc.new { true } } unless respond_to?(:allow_to_validate_object_block)
       
       define_singleton_method(:allow_to_save_object_block) do 
-        Proc.new { |object|  object.valid? and object.changed? } 
+        Proc.new { |object| object.changed? }
       end unless respond_to?(:allow_to_save_object_block)
 
       define_singleton_method(:allow_object_processing_block) do
