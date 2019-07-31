@@ -12,10 +12,7 @@ module SlimFormObject
     end
 
     def save
-      if form_object.valid?
-        _save
-        return true
-      end
+      return _save if form_object.valid?
       false
     rescue
       false
@@ -45,6 +42,8 @@ module SlimFormObject
         stage_4(data_objects_arr)
         form_object.after_save_form_block.call(form_object)
       end
+      
+      true
     end
 
     # association per parent with all nested objects
