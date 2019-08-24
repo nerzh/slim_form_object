@@ -14,8 +14,8 @@ module SlimFormObject
       form_object.after_validation_form_block.call(form_object)
     end
 
-    def allow_to_save_object?(object)
-      form_object.allow_to_save_object_block.call(object)
+    def allow_to_save_object?(object, form_object)
+      form_object.allow_to_save_object_block.call(object, form_object)
     end
 
     def allow_to_validate_object?(data_object)
