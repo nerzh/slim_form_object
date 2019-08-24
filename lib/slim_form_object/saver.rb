@@ -89,7 +89,7 @@ module SlimFormObject
     end
 
     def save_object(object_of_model)
-      if validator.allow_to_save_object?(object_of_model)
+      if validator.allow_to_save_object?(object_of_model, form_object)
           object_of_model.save!
       end
     end

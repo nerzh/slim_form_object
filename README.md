@@ -84,7 +84,7 @@ class ReviewForm < SlimFormObject::Base
    
   after_save_form            { |form|  } # code inside current activerecord transaction after save this form 
   before_validation_form     { |form|  } 
-  allow_to_save_object       { |object|  true or false } 
+  allow_to_save_object       { |object, form|  true or false } 
   allow_to_validate_object   { |data_object|  true or false } 
   allow_object_processing { |data_object|  true or false } # ignore object if false
   
